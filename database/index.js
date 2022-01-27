@@ -40,11 +40,14 @@ const DatabaseAccess = class DatabaseAccess extends MongoClient {
 
     /**
      * Gets all boxes from the mongodb
+     * @param      {Response} Response to return to
      *
      * @return     {Array}  All boxes in the mongodb.
      */
-    getAllBoxes() {
-        return this.getBoxCollection().find().toArray();
+    getAllBoxes(res) {
+        return this.getBoxCollection().find({}).toArray((err, result) => {
+            res.json({boxes : result});
+        });
     }
 }
 

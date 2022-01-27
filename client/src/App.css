@@ -1,8 +1,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Raleway&family=Roboto&display=swap');
 
 :root {
-  --dark: #121212;
   --off-white: #F5F5F5;
+  --dark: #121212;
+  --gray: #BBBBBB;
+  --blue: #2FB1F7;
+  --dark-blue: #347AEB;
 }
 
 * {
@@ -42,6 +45,7 @@ body {
   display: inline-block;
   height: 8%;
   width: 100%;
+  background-color: var(--blue);
   border-bottom: var(--dark) 4px solid;
 }
 

@@ -57,9 +57,7 @@ const FileBoxesApi = class FileBoxesApi {
     }
 
     all(req, res) {
-        res.json({
-            boxes : this.dbAccess.getAllBoxes()
-        });
+        this.dbAccess.getAllBoxes(res);
     }
 
     /**
