@@ -1,2 +1,8 @@
 #Test file boxes instructions
 *.pdf
+
+#node modules
+node_modules
+
+#Database secrets
+secrets.json

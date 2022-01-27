@@ -1,0 +1,62 @@
+@import url('https://fonts.googleapis.com/css2?family=Raleway&family=Roboto&display=swap');
+
+:root {
+  --dark: #121212;
+  --off-white: #F5F5F5;
+}
+
+* {
+  font-family: "Montserrat", sans-serif;
+  color: var(--dark);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: "Raleway", sans-serif;
+}
+
+h1 {
+  font-size: 300%;
+}
+
+h2 {
+  font-size: 200%;
+}
+
+h3 {
+  font-size: 150%;
+}
+
+h4 {
+  font-size: 125%;
+}
+
+body {
+  position: fixed;
+  width: 100vw;
+  height: 100vh;
+  font-size: 24px;
+  background-color: var(--off-white);
+}
+
+.Header {
+  display: inline-block;
+  height: 8%;
+  width: 100%;
+  border-bottom: var(--dark) 4px solid;
+}
+
+.Header h1 {
+  display: inline-block;
+  margin: 0px;
+  padding: 6px;
+}
+
+.Header p {
+  display: inline-block;
+  margin: 0px;
+  margin-left: 55%;
+}
+
+.Main {
+  height: 92%;
+}
