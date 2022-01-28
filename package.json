@@ -1,32 +1,49 @@
 {
-  "name": "file-boxes",
-  "version": "0.0.1",
-  "description": "Takiwa file boxes test.",
-  "main": "server/index.js",
-  "scripts": {
-    "server": "nodemon index.js",
-    "react": "npm start --prefix client",
-    "start": "concurrently \"npm run server\" \"npm run react\""
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/callumc34/File-Boxes"
-  },
-  "keywords": [
-    "ReactJS",
-    "NodeJS",
-    "MongoDB",
-    "CSV"
-  ],
-  "author": "Callum C",
-  "license": "ISC",
-  "dependencies": {
-    "concurrently": "^7.0.0",
-    "cookie-parser": "^1.4.6",
-    "cors": "^2.8.5",
-    "express": "^4.17.2",
-    "express-fileupload": "^1.2.1",
-    "mongodb": "^4.3.1",
-    "nodemon": "^2.0.15"
-  }
+    "name": "file-boxes",
+    "version": "0.0.1",
+    "description": "Takiwa file boxes test.",
+    "main": "server/index.js",
+    "scripts": {
+        "server": "nodemon index.js",
+        "react": "npm start --prefix client",
+        "start": "concurrently \"npm run server\" \"npm run react\"",
+        "format:check": "prettier --check .",
+        "format:write": "prettier --write .",
+        "lint:check": "eslint .",
+        "lint:fix": "eslint --fix .",
+        "prepare": "husky install"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/callumc34/File-Boxes"
+    },
+    "keywords": [
+        "ReactJS",
+        "NodeJS",
+        "MongoDB",
+        "CSV"
+    ],
+    "author": "Callum C",
+    "license": "ISC",
+    "dependencies": {
+        "concurrently": "^7.0.0",
+        "cookie-parser": "^1.4.6",
+        "cors": "^2.8.5",
+        "express": "^4.17.2",
+        "express-fileupload": "^1.2.1",
+        "mongodb": "^4.3.1",
+        "nodemon": "^2.0.15"
+    },
+    "devDependencies": {
+        "eslint": "^8.7.0",
+        "eslint-config-prettier": "^8.3.0",
+        "eslint-plugin-react": "^7.28.0",
+        "husky": "^7.0.4",
+        "lint-staged": "^12.3.2",
+        "prettier": "^2.5.1"
+    },
+    "lint-staged": {
+        "*.js": "eslint --fix",
+        "*.{js,css,md}": "prettier --write"
+    }
 }

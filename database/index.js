@@ -1,6 +1,5 @@
 const MongoClient = require("mongodb").MongoClient;
 
-const Box = require("../models").Box;
 const { DB_USERNAME, DB_PASSWORD, DB_URL, DB_NAME } = require("./secrets");
 
 const URI = `mongodb+srv://${DB_USERNAME}:${DB_PASSWORD}@${DB_URL}/${DB_NAME}`;
@@ -10,9 +9,7 @@ const DatabaseAccess = class DatabaseAccess extends MongoClient {
      * Creats a new DatabaseAccess class
      * @param      {Obkect} Configuration options for MongoClient
      */
-    constructor(
-        options
-    ) {
+    constructor(options) {
         super(URI, options);
         this.connect();
     }
@@ -42,9 +39,13 @@ const DatabaseAccess = class DatabaseAccess extends MongoClient {
      * @param      {Box}  box     The box to add
      */
     addBox(box) {
-        this.getBoxCollection().deleteMany({ name : box.name });
+        this.getBoxCollection().deleteMany({ name: box.name });
         return this.getBoxCollection().insertOne(
-            { name : box.name, description : box.description, fileHash : box.fileHash },
+            {
+                name: box.name,
+                description: box.description,
+                fileHash: box.fileHash,
+            },
             (err, res) => console.log(err, res)
         );
     }
@@ -60,12 +61,14 @@ const DatabaseAccess = class DatabaseAccess extends MongoClient {
      * @return     {Array}  All boxes in the mongodb.
      */
     getAllBoxes(res) {
-        return this.getBoxCollection().find({}).toArray((err, result) => {
-            res.json({boxes : result});
-        });
+        return this.getBoxCollection()
+            .find({})
+            .toArray((err, result) => {
+                res.json({ boxes: result });
+            });
     }
-}
+};
 
 module.exports = {
     DatabaseAccess,
-}
+};

@@ -1,64 +1,69 @@
-@import url('https://fonts.googleapis.com/css2?family=Raleway&family=Roboto&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Raleway&family=Roboto&display=swap");
 
 :root {
-  --off-white: #F5F5F5;
-  --dark: #121212;
-  --gray: #BBBBBB;
-  --blue: #2FB1F7;
-  --dark-blue: #347AEB;
+    --off-white: #f5f5f5;
+    --dark: #121212;
+    --gray: #bbbbbb;
+    --blue: #2fb1f7;
+    --dark-blue: #347aeb;
 }
 
 * {
-  font-family: "Montserrat", sans-serif;
-  color: var(--dark);
+    font-family: "Montserrat", sans-serif;
+    color: var(--dark);
 }
 
-h1, h2, h3, h4, h5, h6 {
-  font-family: "Raleway", sans-serif;
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: "Raleway", sans-serif;
 }
 
 h1 {
-  font-size: 300%;
+    font-size: 300%;
 }
 
 h2 {
-  font-size: 200%;
+    font-size: 200%;
 }
 
 h3 {
-  font-size: 150%;
+    font-size: 150%;
 }
 
 h4 {
-  font-size: 125%;
+    font-size: 125%;
 }
 
 body {
-  width: 100vw;
-  font-size: 24px;
-  background-color: var(--off-white);
+    width: 100vw;
+    font-size: 24px;
+    background-color: var(--off-white);
 }
 
 .Header {
-  display: inline-block;
-  height: 8%;
-  width: 100%;
-  background-color: var(--off-white);
-  border-bottom: var(--dark) 4px solid;
+    display: inline-block;
+    height: 8%;
+    width: 100%;
+    background-color: var(--off-white);
+    border-bottom: var(--dark) 4px solid;
 }
 
 .Header h1 {
-  display: inline-block;
-  margin: 0px;
-  padding: 6px;
+    display: inline-block;
+    margin: 0px;
+    padding: 6px;
 }
 
 .Header p {
-  display: inline-block;
-  margin: 0px;
-  margin-left: 55%;
+    display: inline-block;
+    margin: 0px;
+    margin-left: 55%;
 }
 
 .Main {
-  height: 82%;
+    height: 82%;
 }

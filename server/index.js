@@ -1,24 +1,23 @@
 const express = require("express");
-const path = require("path");
-const fileUpload = require('express-fileupload');
-const cookieParser = require('cookie-parser');
-const bodyParser = require('body-parser');
+const fileUpload = require("express-fileupload");
+const cookieParser = require("cookie-parser");
+const bodyParser = require("body-parser");
 const cors = require("cors");
 const crypto = require("crypto");
 const fs = require("fs");
 
 //cors setup
-const whitelist = ["http://localhost:3000"]
+const whitelist = ["http://localhost:3000"];
 const corsOptions = {
-  origin: function (origin, callback) {
-    if (!origin || whitelist.indexOf(origin) !== -1) {
-      callback(null, true)
-    } else {
-      callback(new Error("Not allowed by CORS"))
-    }
-  },
-  credentials: true,
-}
+    origin: function (origin, callback) {
+        if (!origin || whitelist.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            callback(new Error("Not allowed by CORS"));
+        }
+    },
+    credentials: true,
+};
 
 //Local requires
 const { Box, createBox } = require("../models");
@@ -34,7 +33,7 @@ const calcHash = (stream) => {
     hashSum.update(stream);
 
     return hashSum.digest("hex");
-}
+};
 
 /**
  * RESPONSE CODES
@@ -48,10 +47,7 @@ const FileBoxesApi = class FileBoxesApi {
      * @param      {Object}  eConfig  Configuration for express
      * @param      {Object}  dbConfig  Configuration for the MongoDB
      */
-    constructor(
-        eConfig,
-        dbConfig
-    ) {
+    constructor(eConfig, dbConfig) {
         this.app = express();
         this.app.use(cors(corsOptions));
         this.app.use(bodyParser.json());
@@ -61,7 +57,6 @@ const FileBoxesApi = class FileBoxesApi {
 
         this.dbAccess = new DatabaseAccess(dbConfig);
         this.PORT = eConfig.PORT;
-
 
         this.setupRoutes();
     }
@@ -102,17 +97,14 @@ const FileBoxesApi = class FileBoxesApi {
         const hash = calcHash(uploadFile.data);
 
         //TODO(Callum) : Checks for duplicates
-        fs.mkdir(`${__dirname}/storage`, (err) => {});
+        fs.mkdir(`${__dirname}/storage`);
 
         uploadFile.mv(`${__dirname}/storage/${hash}`, (err) => {
             if (err) return res.sendStatus(500);
             else {
                 this.dbAccess.addBox(
-                    new Box(
-                        req.body.name,
-                        req.body.description,
-                        hash
-                    ));
+                    new Box(req.body.name, req.body.description, hash)
+                );
                 res.sendStatus(200);
             }
         });
@@ -135,18 +127,21 @@ const FileBoxesApi = class FileBoxesApi {
         //     res.download(data);
         // });
         this.dbAccess.getBoxFromHash(hash).toArray((err, result) => {
-            res.download(`${__dirname}/storage/${hash}`, `${result[0].name}.csv`)
+            res.download(
+                `${__dirname}/storage/${hash}`,
+                `${result[0].name}.csv`
+            );
         });
     }
 
     /**
      * Setup express routes
      */
-    setupRoutes() {       
+    setupRoutes() {
         //Get api
         this.app.get("/api", (req, res) => {
             //TODO(Callum): Display api routes
-            res.json({ message: "Api routes: "});
+            res.json({ message: "Api routes: " });
         });
         this.app.get("/api/add", (req, res) => this.add(req, res));
         this.app.get("/api/all", (req, res) => this.all(req, res));
@@ -162,9 +157,9 @@ const FileBoxesApi = class FileBoxesApi {
     start() {
         this.app.listen(this.PORT, () => {
             console.log(`Server listening on ${this.PORT}`);
-        });        
+        });
     }
-}
+};
 
 module.exports = {
     FileBoxesApi,

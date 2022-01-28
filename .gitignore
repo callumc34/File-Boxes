@@ -9,3 +9,6 @@ secrets.json
 
 #Storage
 storage
+
+#eslint/prettier
+.eslintcache
