@@ -34,9 +34,7 @@ h4 {
 }
 
 body {
-  position: fixed;
   width: 100vw;
-  height: 100vh;
   font-size: 24px;
   background-color: var(--off-white);
 }
@@ -45,7 +43,7 @@ body {
   display: inline-block;
   height: 8%;
   width: 100%;
-  background-color: var(--blue);
+  background-color: var(--off-white);
   border-bottom: var(--dark) 4px solid;
 }
 
@@ -62,5 +60,5 @@ body {
 }
 
 .Main {
-  height: 92%;
+  height: 82%;
 }

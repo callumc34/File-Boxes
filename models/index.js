@@ -4,16 +4,16 @@ const Box = class Box {
      *
      * @param      {string}  name         The name of the box
      * @param      {string}  description  The description of the box
-     * @param      {int}  fileId       The file identifier for the box
+     * @param      {int}  fileHash       The file identifier for the box
      */
     constructor(
         name,
         description,
-        fileId
+        fileHash
     ) {
         this.name = name;
         this.description = description;
-        this.fileId = fileId;
+        this.fileHash = fileHash;
     }
 }
 
@@ -25,7 +25,7 @@ const Box = class Box {
  */
 const createBox = (query) => {
     if (query.name == null || query.description == null) return null;
-    return new Box(query.name, query.description, query.fileId);
+    return new Box(query.name, query.description, query.fileHash);
 }
 
 module.exports = {

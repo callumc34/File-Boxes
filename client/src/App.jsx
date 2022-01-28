@@ -1,7 +1,9 @@
 import React from "react";
 
 import logo from './logo.svg';
+import 'semantic-ui-css/semantic.min.css';
 import './App.css';
+
 
 import Box from './models/Box';
 
@@ -14,6 +16,8 @@ function App() {
       .then((data) => setData(data));
   }, []);
 
+  //TODO(Callum) : Render a batch
+  //TODO(Callum) : Loading circle
   return (
     <div className="App">
       <div className="Header">
@@ -21,7 +25,9 @@ function App() {
         <p>A Website for displaying CSV files.</p>
       </div>
       <div className="Main">
-        {!data ? "Loading..." : Box.renderAll(data.boxes)}
+        <div className="Boxes">
+          {!data ? "Loading..." : Box.renderAll(data.boxes)}
+        </div>
       </div>
     </div>
   );

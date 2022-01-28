@@ -1,0 +1,17 @@
+.BoxCreate {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  bottom: 50%;
+  margin: auto auto;
+  width: 500px;
+  height: 500px;
+  margin: auto;
+  border: var(--dark) 4px solid;
+  border-radius: 16px;
+  box-shadow: var(--gray) 6px 6px 4px;
+  z-index: 1;
+  background-color: var(--off-white);
+  padding: 24px;
+}

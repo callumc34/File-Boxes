@@ -6,3 +6,6 @@ node_modules
 
 #Database secrets
 secrets.json
+
+#Storage
+storage

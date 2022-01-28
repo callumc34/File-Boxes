@@ -17,8 +17,23 @@ const DatabaseAccess = class DatabaseAccess extends MongoClient {
         this.connect();
     }
 
+    /**
+     * Gets the box collection.
+     *
+     * @return     {Collection}  The box collection.
+     */
     getBoxCollection() {
         return this.db(DB_NAME).collection("boxes");
+    }
+
+    /**
+     * Gets the box from hash.
+     *
+     * @param      {String}  fileHash  The file hash
+     * @return     {Object}  The box from hash.
+     */
+    getBoxFromHash(fileHash) {
+        return this.getBoxCollection().find({ fileHash });
     }
 
     /**
@@ -29,7 +44,7 @@ const DatabaseAccess = class DatabaseAccess extends MongoClient {
     addBox(box) {
         this.getBoxCollection().deleteMany({ name : box.name });
         return this.getBoxCollection().insertOne(
-            { name : box.name, description : box.description, fileId : box.fileId },
+            { name : box.name, description : box.description, fileHash : box.fileHash },
             (err, res) => console.log(err, res)
         );
     }
