@@ -5,7 +5,7 @@ ReactJS Website with a NodeJS backend to display CSV files in boxes allowing upl
 ## Installation & Running instructions
 
 1. Clone this repository
-2. cd into the repository and run the command `npm install && cd clients && npm install`
+2. cd into the repository and run the command `npm install && cd client && npm install`
 3. Create a database/secrets.json file that should look like this
 
 ```json
