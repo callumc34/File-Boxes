@@ -1,9 +1,11 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import Axios from "axios";
-import { Grid, Card, Segment, Icon } from "semantic-ui-react";
+import { Grid, Card, Segment, Icon, Button } from "semantic-ui-react";
 
 import BoxCreate from "./BoxCreate";
+import EditBox from "./EditBox";
+import UploadEmpty from "./UploadEmpty";
 
 import "./Box.css";
 
@@ -70,8 +72,21 @@ class Box extends React.Component {
         );
     }
 
-    downloadFile = () => {
-        Axios.get(`/api/download?fileHash=${this.fileHash}`, {
+    unbox = () => {
+        this.downloadFile(true);
+    };
+
+    download = () => {
+        this.downloadFile(false);
+    };
+
+    /**
+     * @brief      Downloads a file.
+     *
+     * @param      {boolean}  Whether to unbox
+     */
+    downloadFile(unbox) {
+        Axios.get(`api/download?fileHash=${this.fileHash}`, {
             responseType: "blob",
         }).then((response) => {
             const fileURL = window.URL.createObjectURL(
@@ -84,25 +99,61 @@ class Box extends React.Component {
             document.body.appendChild(fileLink);
             fileLink.click();
             fileLink.remove();
+            if (unbox)
+                Axios.get(`api/delete?fileHash=${this.fileHash}`).then(() =>
+                    window.location.reload(true)
+                );
         });
+    }
+
+    editCard = () => {
+        ReactDOM.render(
+            <React.StrictMode>
+                <EditBox box={this} />
+            </React.StrictMode>,
+            document.getElementById("popup")
+        );
+    };
+
+    uploadFile = () => {
+        ReactDOM.render(
+            <React.StrictMode>
+                <UploadEmpty box={this} />
+            </React.StrictMode>,
+            document.getElementById("popup")
+        );
     };
 
     render() {
+        const uploadButton = (
+            <Button onClick={this.uploadFile}>
+                <Icon name="cloud upload" />
+            </Button>
+        );
+
         const extra = (
             <Segment.Group horizontal>
                 <Segment className="FileLink">
                     <Icon name="cloud download" />
-                    <a onClick={this.downloadFile}>{this.name}.csv</a>
+                    <a onClick={this.download}>{this.name}.csv</a>
                 </Segment>
-                <Segment className="Hash">{this.fileHash}</Segment>
+                <Segment className="Hash">
+                    {this.fileHash == null ? uploadButton : this.fileHash}
+                </Segment>
             </Segment.Group>
+        );
+
+        const edit = (
+            <a onClick={this.editCard}>
+                <Icon name="pencil alternate" /> Edit
+            </a>
         );
 
         return (
             <Card
                 header={this.name}
                 description={this.description}
-                meta="CSV"
+                meta={edit}
                 extra={extra}
             />
         );

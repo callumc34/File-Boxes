@@ -1,4 +1,5 @@
 import React from "react";
+import { Dimmer, Loader, Segment } from "semantic-ui-react";
 
 import "semantic-ui-css/semantic.min.css";
 import "./App.css";
@@ -14,8 +15,16 @@ function App() {
             .then((data) => setData(data));
     }, []);
 
-    //TODO(Callum) : Render a batch
-    //TODO(Callum) : Loading circle
+    const loader = () => {
+        return (
+            <Segment>
+                <Dimmer active inverted>
+                    <Loader inverted content="Loading" />
+                </Dimmer>
+            </Segment>
+        );
+    };
+
     return (
         <div className="App">
             <div className="Header">
@@ -24,7 +33,7 @@ function App() {
             </div>
             <div className="Main">
                 <div className="Boxes">
-                    {!data ? "Loading..." : Box.renderAll(data.boxes)}
+                    {!data ? loader() : Box.renderAll(data.boxes)}
                 </div>
             </div>
         </div>

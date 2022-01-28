@@ -19,8 +19,62 @@ const DatabaseAccess = class DatabaseAccess extends MongoClient {
      *
      * @return     {Collection}  The box collection.
      */
-    getBoxCollection() {
-        return this.db(DB_NAME).collection("boxes");
+    async getBoxCollection() {
+        return await this.db(DB_NAME).collection("boxes");
+    }
+
+    /**
+     * Adds a box to the mongodb
+     *
+     * @param      {Box}  box     The box to add
+     */
+    async addBox(box) {
+        let boxes = await this.getBoxCollection();
+        await boxes.deleteMany({ name: box.name });
+        return await boxes.insertOne(
+            {
+                name: box.name,
+                description: box.description,
+                fileHash: box.fileHash,
+            },
+            (err) => {
+                if (err) console.log(err);
+            }
+        );
+    }
+
+    /**
+     * Edits the box in the database
+     *
+     * @param      {Object}  box     The box to be edited
+     */
+    async editBox(box) {
+        if (box.fileHash == null) return false;
+        let boxes = await this.getBoxCollection();
+        return await boxes.updateMany(
+            { fileHash: box.fileHash },
+            { $set: { name: box.name, description: box.description } }
+        );
+    }
+
+    /**
+     * Removes a named box.
+     *
+     * @param      {String}  name    The name
+     */
+    async removeNamedBox(name) {
+        let boxes = await this.getBoxCollection();
+        return await boxes.deleteMany({ name });
+    }
+
+    /**
+     * Removes a box. based on its hash
+     *
+     * @param      {String}  fileHash  The file hash
+     */
+    async removeBox(fileHash) {
+        let boxes = await this.getBoxCollection();
+        return await boxes.deleteMany({ fileHash });
     }
 
     /**
@@ -29,29 +83,9 @@ const DatabaseAccess = class DatabaseAccess extends MongoClient {
      * @param      {String}  fileHash  The file hash
      * @return     {Object}  The box from hash.
      */
-    getBoxFromHash(fileHash) {
-        return this.getBoxCollection().find({ fileHash });
-    }
-
-    /**
-     * Adds a box to the mongodb
-     *
-     * @param      {Box}  box     The box to add
-     */
-    addBox(box) {
-        this.getBoxCollection().deleteMany({ name: box.name });
-        return this.getBoxCollection().insertOne(
-            {
-                name: box.name,
-                description: box.description,
-                fileHash: box.fileHash,
-            },
-            (err, res) => console.log(err, res)
-        );
-    }
-
-    removeBox(name) {
-        this.getBoxCollection().deleteMany({ name });
+    async getBoxFromHash(fileHash) {
+        let boxes = await this.getBoxCollection();
+        return await boxes.find({ fileHash }).toArray();
     }
 
     /**
@@ -60,12 +94,11 @@ const DatabaseAccess = class DatabaseAccess extends MongoClient {
      *
      * @return     {Array}  All boxes in the mongodb.
      */
-    getAllBoxes(res) {
-        return this.getBoxCollection()
-            .find({})
-            .toArray((err, result) => {
-                res.json({ boxes: result });
-            });
+    async getAllBoxes(res) {
+        let boxes = await this.getBoxCollection();
+        return await boxes.find({}).toArray((err, result) => {
+            res.json({ boxes: result });
+        });
     }
 };
 

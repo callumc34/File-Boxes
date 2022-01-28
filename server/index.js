@@ -7,7 +7,7 @@ const crypto = require("crypto");
 const fs = require("fs");
 
 //cors setup
-const whitelist = ["http://localhost:3000"];
+const whitelist = ["http://localhost:3000", "http://localhost:5000/"];
 const corsOptions = {
     origin: function (origin, callback) {
         if (!origin || whitelist.indexOf(origin) !== -1) {
@@ -62,6 +62,16 @@ const FileBoxesApi = class FileBoxesApi {
     }
 
     /**
+     * Edits a box based on its file hash
+     *
+     * @param      {Request}  req     The request
+     * @param      {Response}}  res     The response
+     */
+    edit(req, res) {
+        this.dbAccess.editBox(req.query).then(() => res.sendStatus(200));
+    }
+
+    /**
      * Api gateway to add box to database
      *
      * @param      {Request}  req     The request
@@ -70,9 +80,41 @@ const FileBoxesApi = class FileBoxesApi {
     add(req, res) {
         var box = createBox(req.query);
         if (box != null) {
-            this.dbAccess.addBox(box);
-            res.sendStatus(200);
+            this.dbAccess.addBox(box).then(() => res.sendStatus(200));
         } else res.sendStatus(550);
+    }
+
+    /**
+     * Api gateway to delete box from database
+     *
+     * @param      {Request}  req     The request
+     * @param      {Response}  res     The response
+     */
+    delete(req, res) {
+        const hash = req.query.fileHash;
+        if (hash == undefined) return res.sendStatus(550);
+
+        const filePath = `${__dirname}/storage/${hash}`;
+        if (fs.existsSync(filePath)) {
+            fs.unlink(filePath, (err) => {
+                if (err) {
+                    console.log(err);
+                }
+            });
+            this.dbAccess.removeBox(hash).then(() => res.sendStatus(200));
+        }
+    }
+
+    /**
+     * Deletes a box based on the name
+     *
+     * @param      {Request}  req     The request
+     * @param      {Response}  res     The response
+     */
+    deleteName(req, res) {
+        this.dbAccess.removeNamedBox(req.query.name).then(() => {
+            res.sendStatus(200);
+        });
     }
 
     /**
@@ -83,6 +125,36 @@ const FileBoxesApi = class FileBoxesApi {
      */
     all(req, res) {
         this.dbAccess.getAllBoxes(res);
+    }
+
+    /**
+     * Download the desired hash file
+     *
+     * @param      {Request}  req     The request
+     * @param      {Response}  res     The response
+     */
+    download(req, res) {
+        const hash = req.query.fileHash;
+        if (hash == undefined || hash == "null") return res.sendStatus(550);
+
+        this.dbAccess.getBoxFromHash(hash).then((result) => {
+            const filePath = `${__dirname}/storage/${hash}`;
+            res.download(filePath, `${result[0].name}.csv`);
+        });
+    }
+
+    /**
+     * Api gateway to upload an empty box to database
+     *
+     * @param      {Request}  req     The request
+     * @param      {Response}  res     The response
+     */
+    emptyBox(req, res) {
+        this.dbAccess
+            .addBox(new Box(req.query.name, req.query.description, null))
+            .then(() => {
+                res.sendStatus(200);
+            });
     }
 
     /**
@@ -97,41 +169,22 @@ const FileBoxesApi = class FileBoxesApi {
         const hash = calcHash(uploadFile.data);
 
         //TODO(Callum) : Checks for duplicates
-        fs.mkdir(`${__dirname}/storage`);
+        fs.mkdir(`${__dirname}/storage`, () => {});
 
         uploadFile.mv(`${__dirname}/storage/${hash}`, (err) => {
             if (err) return res.sendStatus(500);
             else {
-                this.dbAccess.addBox(
-                    new Box(req.body.name, req.body.description, hash)
-                );
-                res.sendStatus(200);
+                this.dbAccess
+                    .addBox(new Box(req.body.name, req.body.description, hash))
+                    .then(() => res.sendStatus(200));
             }
         });
     }
 
-    /**
-     * Download the desired hash file
-     *
-     * @param      {Request}  req     The request
-     * @param      {Response}  res     The response
-     */
-    download(req, res) {
-        const hash = req.query.fileHash;
-        if (hash == undefined) return res.sendStatus(550);
-        // fs.readFile(`${__dirname}/storage/${hash}`, (err, data) => {
-        //     if (err) {
-        //         return res.sendStatus(404);
-        //     }
-        //     res.writeHead(200);
-        //     res.download(data);
-        // });
-        this.dbAccess.getBoxFromHash(hash).toArray((err, result) => {
-            res.download(
-                `${__dirname}/storage/${hash}`,
-                `${result[0].name}.csv`
-            );
-        });
+    uploadFromEmpty(req, res) {
+        this.dbAccess
+            .removeNamedBox(req.body.name)
+            .then(() => this.saveFile(req, res));
     }
 
     /**
@@ -144,11 +197,19 @@ const FileBoxesApi = class FileBoxesApi {
             res.json({ message: "Api routes: " });
         });
         this.app.get("/api/add", (req, res) => this.add(req, res));
+        this.app.get("/api/edit", (req, res) => this.edit(req, res));
+        this.app.get("/api/delete", (req, res) => this.delete(req, res));
+        this.app.get("/api/deletename", (req, res) =>
+            this.deleteName(req, res)
+        );
         this.app.get("/api/all", (req, res) => this.all(req, res));
         this.app.get("/api/download", (req, res) => this.download(req, res));
-
+        this.app.get("/api/emptybox", (req, res) => this.emptyBox(req, res));
         //Post api
         this.app.post("/api/upload", (req, res) => this.saveFile(req, res));
+        this.app.post("/api/uploadfromempty", (req, res) =>
+            this.uploadFromEmpty(req, res)
+        );
     }
 
     /**

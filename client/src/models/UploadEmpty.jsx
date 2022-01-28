@@ -2,13 +2,37 @@ import React from "react";
 import ReactDOM from "react-dom";
 import { Form } from "semantic-ui-react";
 
-import "./BoxCreate.css";
+import "./UploadEmpty.css";
 
-class BoxCreate extends React.Component {
-    state = {
-        name: "",
-        description: "",
-        selectedFile: "",
+class UploadEmpty extends React.Component {
+    constructor(props) {
+        super(props);
+        this.box = props.box;
+        this.state = {
+            name: props.box.name,
+            description: props.box.description,
+            selectedFile: "",
+        };
+    }
+
+    handleFileChange = (e) => {
+        this.setState({ selectedFile: e.target.files[0] });
+    };
+
+    handleSubmit = () => {
+        const data = new FormData();
+        data.append("name", this.state.name);
+        data.append("description", this.state.description);
+        data.append("file", this.state.selectedFile);
+        fetch("/api/uploadfromempty", {
+            method: "POST",
+            body: data,
+        }).then((res) => {
+            this.setState({ name: "", description: "", selectedFile: "" });
+            //TODO(Callum) : Show confirmation message
+            this.close();
+            window.location.reload(false);
+        });
     };
 
     close() {
@@ -18,57 +42,34 @@ class BoxCreate extends React.Component {
         );
     }
 
-    handleFileChange = (e) => {
-        this.setState({ selectedFile: e.target.files[0] });
-    };
-
-    handleChange = (e, { name, value }) => this.setState({ [name]: value });
-
-    handleSubmit = () => {
-        //Handle file upload
-        const data = new FormData();
-        data.append("name", this.state.name);
-        data.append("description", this.state.description);
-        if (this.state.selectedFile) {
-            data.append("file", this.state.selectedFile);
-            fetch("/api/upload", {
-                method: "POST",
-                body: data,
-            }).then((res) => {});
-        } else {
-            fetch(
-                `/api/emptybox?name=${this.state.name}&description=${this.state.description}`
-            ).then((res) => {});
-        }
-        this.setState({ name: "", description: "", selectedFile: "" });
-        //TODO(Callum) : Show confirmation message
-        this.close();
-        window.location.reload(false);
-    };
-
     render() {
+        const { name, description } = this.state;
+
         return (
             <div className="PopUpBox">
                 <Form onSubmit={this.handleSubmit}>
                     <Form.Input
                         required
                         fluid
+                        disabled
                         name="name"
                         label="Name"
+                        value={name}
                         placeholder="Box Name"
-                        onChange={this.handleChange}
                     />
                     <Form.Input
                         required
                         fluid
+                        disabled
                         name="description"
                         label="Description"
+                        value={description}
                         placeholder="Description"
-                        onChange={this.handleChange}
                     />
                     <Form.Input
                         type="file"
                         fluid
+                        required
                         label="File upload"
                         onChange={this.handleFileChange}
                     />
@@ -82,4 +83,4 @@ class BoxCreate extends React.Component {
     }
 }
 
-export default BoxCreate;
+export default UploadEmpty;
