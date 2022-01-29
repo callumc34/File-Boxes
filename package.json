@@ -1,6 +1,6 @@
 {
     "name": "file-boxes",
-    "version": "0.0.1",
+    "version": "0.1.0",
     "description": "Takiwa file boxes test.",
     "main": "server/index.js",
     "scripts": {
