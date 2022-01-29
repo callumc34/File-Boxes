@@ -59,15 +59,33 @@ class Box extends React.Component {
 
         do {
             boxBoxes.push(new AddBox(boxBoxes.length));
-        } while (boxBoxes.length < 10);
+        } while (boxBoxes.length < 6);
+
+        var boxRows = [];
+        while (boxBoxes.length > 0) {
+            var row = [];
+            for (let i = 1; i <= 3; i++) {
+                if (boxBoxes[0] === undefined) break;
+                else row.push(boxBoxes.pop());
+            }
+            boxRows.push(row.reverse());
+        }
+
+
 
         return (
-            <Grid colums={3} divided>
-                {boxBoxes.map((box) => (
-                    <Grid.Column width={3} key={box.name}>
-                        {box.render()}
-                    </Grid.Column>
-                ))}
+            <Grid columns={3} divided>
+                {
+                    boxRows.reverse().map((row) => (
+                        <Grid.Row>
+                            {row.map((box) => (                            
+                                <Grid.Column width={4} key={box.name}>
+                                    {box.render()}
+                                </Grid.Column>
+                            ))}
+                        </Grid.Row>
+                    ))
+                }
             </Grid>
         );
     }

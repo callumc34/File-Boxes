@@ -1,0 +1,13 @@
+.Main {
+    min-height: 88.4vh;
+}
+
+.pushable {
+    min-height: 88.4vh;
+    width: calc(100vw - 350px);
+}
+
+.LogInTitle {
+    height: fit-content;
+    padding: 24px !important;
+}
