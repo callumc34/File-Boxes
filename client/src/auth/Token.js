@@ -45,6 +45,7 @@ class Token {
      */
     static async expired() {
         var result = await Token.getInfo();
+
         if (result == null) return null;
         else return result.expired;
     }
@@ -56,7 +57,7 @@ class Token {
      */
     static async getUser() {
         var result = await Token.getInfo();
-        console.log(result);
+
         if (result == null) return null;
         return result.username;
     }

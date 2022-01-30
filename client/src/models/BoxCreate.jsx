@@ -35,8 +35,13 @@ class BoxCreate extends PopUp {
         this.setState({ selectedFile: e.target.files[0] });
     };
 
+    handleCheckbox = (e) => {
+        this.setState({ public: !this.state.public })
+    }
+
     handleSubmit = () => {
         //Handle file upload
+        
         const data = new FormData();
         data.append("name", this.state.name);
         data.append("description", this.state.description);
@@ -62,9 +67,9 @@ class BoxCreate extends PopUp {
         } else {
             fetch(
                 `/api/emptybox?name=${this.state.name}\
-                &description=${this.state.description}\
-                &username=${this.state.username}\
-                &public=${this.state.public ? 1 : 0}`
+&description=${this.state.description}\
+&username=${this.state.username}\
+&public=${this.state.public ? 1 : 0}`
             ).then((res) => {});
         }
         this.setState({ name: "", description: "", selectedFile: "" });
@@ -113,7 +118,7 @@ class BoxCreate extends PopUp {
                         }
                         name="public"
                         disabled={!Token.exists()}
-                        onChange={this.handleChange}
+                        onChange={this.handleCheckbox}
                      /> 
                     <Form.Group widths="equal">
                         <Form.Button>Submit</Form.Button>

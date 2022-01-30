@@ -6,7 +6,9 @@ import "./PopUp.css"
 class PopUp extends React.Component {
     state = {};
 
-    handleChange = (e, { name, value }) => this.setState({ [name]: value });
+    handleChange = (e, { name, value }) => {
+        this.setState({ [name]: value });
+    }
 
     close() {
         ReactDOM.render(

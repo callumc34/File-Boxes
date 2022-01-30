@@ -18,7 +18,8 @@ class EditBox extends PopUp {
             fileHash: props.box.fileHash,
             username: props.box.username,
             isPublic: props.box.public,
-            showError: false
+            showError: false,
+            error: ""
         };
     }
 
@@ -37,13 +38,23 @@ class EditBox extends PopUp {
 
     unbox = () => {
         if (this.state.fileHash === null) {
-            this.setState({ showError: true });
+            this.setState({
+                showError: true,
+                error: "Unable to unbox an empty box."
+            });
             return;
         }
         this.box.unbox();
     };
 
     preview = () => {
+        if (this.state.fileHash === null) {
+            this.setState({
+                showError: true,
+                error: "Unable to preview an empty box."
+            });
+            return;
+        }
         this.close();
 
         Axios.get(`/api/file?fileHash=${this.box.fileHash}`)
@@ -63,7 +74,7 @@ class EditBox extends PopUp {
                 {!this.state.showError ? null : 
                     <Message negative>
                         <Message.Header as="a" to="/login">
-                            Unable to unbox an empty box
+                            {this.state.error}
                         </Message.Header>
                     </Message>
                 }
