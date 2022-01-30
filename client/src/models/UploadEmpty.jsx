@@ -2,9 +2,11 @@ import React from "react";
 import ReactDOM from "react-dom";
 import { Form } from "semantic-ui-react";
 
+import PopUp from "./PopUp";
+
 import "./UploadEmpty.css";
 
-class UploadEmpty extends React.Component {
+class UploadEmpty extends PopUp {
     constructor(props) {
         super(props);
         this.box = props.box;
@@ -34,13 +36,6 @@ class UploadEmpty extends React.Component {
             window.location.reload(false);
         });
     };
-
-    close() {
-        ReactDOM.render(
-            <React.StrictMode></React.StrictMode>,
-            document.getElementById("popup")
-        );
-    }
 
     render() {
         const { name, description } = this.state;

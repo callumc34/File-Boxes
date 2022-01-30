@@ -71,21 +71,17 @@ class Box extends React.Component {
             boxRows.push(row.reverse());
         }
 
-
-
         return (
             <Grid columns={3} divided>
-                {
-                    boxRows.reverse().map((row) => (
-                        <Grid.Row>
-                            {row.map((box) => (                            
-                                <Grid.Column width={4} key={box.name}>
-                                    {box.render()}
-                                </Grid.Column>
-                            ))}
-                        </Grid.Row>
-                    ))
-                }
+                {boxRows.reverse().map((row) => (
+                    <Grid.Row>
+                        {row.map((box) => (
+                            <Grid.Column width={4} key={box.name}>
+                                {box.render()}
+                            </Grid.Column>
+                        ))}
+                    </Grid.Row>
+                ))}
             </Grid>
         );
     }
@@ -150,15 +146,27 @@ class Box extends React.Component {
         );
 
         const extra = (
-            <Segment.Group horizontal>
-                <Segment className="FileLink">
-                    <Icon name="cloud download" />
-                    <a onClick={this.download}>{this.name}.csv</a>
-                </Segment>
-                <Segment className="Hash">
-                    {this.fileHash == null ? uploadButton : this.fileHash}
-                </Segment>
-            </Segment.Group>
+            <>
+                <Segment.Group horizontal>
+                    <Button fluid onClick={this.editCard}>
+                        <Icon name="pencil alternate" />
+                        Edit
+                    </Button>
+                    <Button fluid className="NoMargin">
+                        <Icon name="share" />
+                        Share
+                    </Button>
+                </Segment.Group>
+                <Segment.Group horizontal>
+                    <Segment className="FileLink">
+                        <Icon name="cloud download" />
+                        <a onClick={this.download}>{this.name}.csv</a>
+                    </Segment>
+                    <Segment className="Hash">
+                        {this.fileHash == null ? uploadButton : this.fileHash}
+                    </Segment>
+                </Segment.Group>
+            </>
         );
 
         const edit = (
@@ -167,11 +175,12 @@ class Box extends React.Component {
             </a>
         );
 
+        //TODO(Callum) : meta={this.username}
         return (
             <Card
                 header={this.name}
                 description={this.description}
-                meta={edit}
+                meta="Username"
                 extra={extra}
             />
         );

@@ -1,9 +1,5 @@
 import React from "react";
-import {
-    Dimmer,
-    Loader,
-    Segment
-} from "semantic-ui-react";
+import { Dimmer, Loader, Header, Segment } from "semantic-ui-react";
 
 import "semantic-ui-css/semantic.min.css";
 import "./Home.css";
@@ -33,61 +29,25 @@ function Home() {
     const Boxes = () => {
         <div className="Boxes">
             {!data ? loader() : Box.renderAll(data.boxes)}
-        </div>
-    }
+        </div>;
+    };
 
     class Display extends React.Component {
         render() {
-            return (            
-                <div className="Boxes">
-                    {!data ? loader() : Box.renderAll(data.boxes)}
-                </div>
+            return (
+                <>
+                    <Header as="h1" className="BoxesHeader">
+                        Public Boxes
+                    </Header>
+                    <div className="Boxes">
+                        {!data ? loader() : Box.renderAll(data.boxes)}
+                    </div>
+                </>
             );
         }
     }
 
-    return Page(Display)
-
-    // return (
-    //     <div className="App">
-    //         <div className="Header">
-    //             <h1 className="Title">File Boxes</h1>
-    //             <p>A Website for displaying CSV files.</p>
-    //         </div>
-    //         <Sidebar.Pushable>
-    //             <Sidebar
-    //                 as={Menu}
-    //                 animation="push"
-    //                 direction="left"
-    //                 icon='labeled'
-    //                 width="wide"
-    //                 inverted
-    //                 vertical
-    //                 visible
-    //             >
-    //                 <Menu.Item as='a'>
-    //                   <Icon name='home' inverted />
-    //                   Home
-    //                 </Menu.Item>
-    //                 <Menu.Item as='a'>
-    //                   <Icon name='sign in' inverted />
-    //                   Login
-    //                 </Menu.Item>
-    //                 <Menu.Item as='a'>
-    //                   <Icon name='sign out' inverted />
-    //                   Logout
-    //                 </Menu.Item>
-    //             </Sidebar>
-    //             <Sidebar.Pusher>
-    //                 <div className="Main">
-        // <div className="Boxes">
-        //     {!data ? loader() : Box.renderAll(data.boxes)}
-        // </div>
-    //                 </div>
-    //             </Sidebar.Pusher>
-    //         </Sidebar.Pushable>
-    //     </div>
-    // );
+    return Page(Display);
 }
 
 export default Home;

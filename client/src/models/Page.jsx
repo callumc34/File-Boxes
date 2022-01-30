@@ -4,11 +4,9 @@ import {
     Menu,
     Icon,
     Segment,
-    Sidebar
+    Sidebar,
 } from "semantic-ui-react";
-import {
-  Link
-} from "react-router-dom";
+import { Link } from "react-router-dom";
 
 import "./Page.css";
 
@@ -24,30 +22,30 @@ function Page(Main) {
                     as={Menu}
                     animation="push"
                     direction="left"
-                    icon='labeled'
+                    icon="labeled"
                     width="wide"
                     inverted
                     vertical
                     visible
                 >
-                    <Menu.Item as='a'>
-                        <Link to="/">
-                          <Icon name='home' inverted />
-                          Home
-                        </Link>
-                    </Menu.Item>
-                    <Menu.Item as='a'>
-                        <Link to="/login">
-                          <Icon name='sign in' inverted />
-                          Login
-                        </Link>
-                    </Menu.Item>
-                    <Menu.Item as='a'>
-                        <Link to="/logout">
-                          <Icon name='sign out' inverted />
-                          Logout
-                        </Link>
-                    </Menu.Item>
+                    <Link to="/">
+                        <Menu.Item as="a">
+                            <Icon name="home" inverted />
+                            Home
+                        </Menu.Item>
+                    </Link>
+                    <Link to="/login">
+                        <Menu.Item as="a">
+                            <Icon name="sign in" inverted />
+                            Login
+                        </Menu.Item>
+                    </Link>
+                    <Link to="/logout">
+                        <Menu.Item as="a">
+                            <Icon name="sign out" inverted />
+                            Logout
+                        </Menu.Item>
+                    </Link>
                 </Sidebar>
                 <Sidebar.Pusher>
                     <div className="Main">

@@ -1,13 +1,12 @@
 import React from "react";
 import { Card, Form, Message, Header } from "semantic-ui-react";
-import { Link } from "react-router-dom";
 import Axios from "axios";
-import Token from "../auth/Token";
+
+import "./SignUp.css";
 
 import Page from "../models/Page";
-import "./Login.css";
 
-function Login() {
+function SignUp() {
     class Display extends React.Component {
         state = {
             username: "",
@@ -18,16 +17,14 @@ function Login() {
         handleChange = (e, { name, value }) => this.setState({ [name]: value });
 
         handleSubmit = () => {
-            const { username, password } = this.state;
-            Axios.post("/api/login", {
-                username,
-                password,
+            Axios.post("/api/signup", {
+                username: this.state.username,
+                password: this.state.password,
             })
-                .then((result) => {
-                    if (result.data.token == null)
-                        return this.setState({ failed: true });
-                    Token.set(result.data.token);
-                    window.location.replace("/");
+                .then((res) => {
+                    if (res.status === 200)
+                        return window.location.replace("/login");
+                    this.setState({ failed: true });
                 })
                 .catch((err) => {
                     this.setState({ failed: true });
@@ -46,7 +43,7 @@ function Login() {
                     <Card>
                         <Card.Content className="LogInTitle">
                             <Header as="h1" textAlign="center">
-                                Log In
+                                Sign Up
                             </Header>
                         </Card.Content>
                         <Card.Content>
@@ -70,8 +67,6 @@ function Login() {
                                 />
                                 <Form.Group>
                                     <Form.Button>Submit</Form.Button>
-                                    No account?&ensp;
-                                    <Link to="/signup">Create one</Link>
                                 </Form.Group>
                             </Form>
                         </Card.Content>
@@ -84,4 +79,4 @@ function Login() {
     return Page(Display);
 }
 
-export default Login;
+export default SignUp;

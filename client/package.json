@@ -13,6 +13,7 @@
         "react-scripts": "^5.0.0",
         "semantic-ui-css": "^2.4.1",
         "semantic-ui-react": "^2.1.1",
+        "sfcookies": "^1.0.2",
         "web-vitals": "^2.1.4"
     },
     "scripts": {
