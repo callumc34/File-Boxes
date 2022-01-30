@@ -9,11 +9,12 @@ import "./UploadEmpty.css";
 class UploadEmpty extends PopUp {
     constructor(props) {
         super(props);
-        this.box = props.box;
+        console.log(props.box);
         this.state = {
             name: props.box.name,
             description: props.box.description,
-            selectedFile: "",
+            fileHash: props.box.fileHash,
+            public: props.box.public,
         };
     }
 
@@ -26,11 +27,12 @@ class UploadEmpty extends PopUp {
         data.append("name", this.state.name);
         data.append("description", this.state.description);
         data.append("file", this.state.selectedFile);
+        data.append("username", this.state.username);
+        data.append("public", this.state.public ? 1 : 0);
         fetch("/api/uploadfromempty", {
             method: "POST",
             body: data,
         }).then((res) => {
-            this.setState({ name: "", description: "", selectedFile: "" });
             //TODO(Callum) : Show confirmation message
             this.close();
             window.location.reload(false);

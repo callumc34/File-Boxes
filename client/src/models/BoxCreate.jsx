@@ -20,24 +20,10 @@ class BoxCreate extends PopUp {
         expired: false,
         username: null
     };
-
-    componentDidMount() {        
-        Token.expired().then((result) => {
-            if (result) this.setState({ expired: true });
-        });
-
-        Token.getUser().then((result) => {
-            if (result != null) this.setState({ username:  result });
-        })
-    }
-
+    
     handleFileChange = (e) => {
         this.setState({ selectedFile: e.target.files[0] });
     };
-
-    handleCheckbox = (e) => {
-        this.setState({ public: !this.state.public })
-    }
 
     handleSubmit = () => {
         //Handle file upload
@@ -51,8 +37,8 @@ class BoxCreate extends PopUp {
             if (this.state.expired) {
                 return;
             } else {
-                data.append("username", Token.getUser());
-                data.append("public", this.state.public);
+                data.append("username", this.state.username);
+                data.append("public", this.state.public ? 1 : 0);
             } 
         } else {
                 data.append("public", true);

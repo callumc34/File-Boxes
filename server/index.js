@@ -216,6 +216,8 @@ const FileBoxesApi = class FileBoxesApi {
         let uploadFile = req.files.file;
 
         const hash = calcHash(uploadFile.data);
+        var boxInfo = req.body;
+        boxInfo.fileHash = hash;
 
         //TODO(Callum) : Checks for duplicates
         fs.mkdir(`${__dirname}/storage`, () => {});
@@ -224,7 +226,7 @@ const FileBoxesApi = class FileBoxesApi {
             if (err) return res.sendStatus(500);
             else {
                 this.dbAccess
-                    .addBox(Box.fromObj(req.body))
+                    .addBox(Box.fromObj(boxInfo))
                     .then(() => res.sendStatus(200));
             }
         });

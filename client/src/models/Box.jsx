@@ -42,6 +42,7 @@ class Box extends React.Component {
         this.name = props.name;
         this.description = props.description;
         this.fileHash = props.fileHash;
+        this.public = props.public;
         this.username = props.username;
     }
 

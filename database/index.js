@@ -208,7 +208,7 @@ const DatabaseAccess = class DatabaseAccess extends MongoClient {
         let boxes = await this.getBoxCollection();
         return await boxes.updateMany(
             { fileHash: box.fileHash },
-            { $set: { name: box.name, description: box.description } }
+            { $set: box }
         );
     }
 
