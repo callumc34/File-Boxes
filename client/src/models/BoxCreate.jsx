@@ -2,27 +2,20 @@ import React from "react";
 import ReactDOM from "react-dom";
 import { Form } from "semantic-ui-react";
 
+import PopUp from "./PopUp";
+
 import "./BoxCreate.css";
 
-class BoxCreate extends React.Component {
+class BoxCreate extends PopUp {
     state = {
         name: "",
         description: "",
         selectedFile: "",
     };
 
-    close() {
-        ReactDOM.render(
-            <React.StrictMode></React.StrictMode>,
-            document.getElementById("popup")
-        );
-    }
-
     handleFileChange = (e) => {
         this.setState({ selectedFile: e.target.files[0] });
     };
-
-    handleChange = (e, { name, value }) => this.setState({ [name]: value });
 
     handleSubmit = () => {
         //Handle file upload

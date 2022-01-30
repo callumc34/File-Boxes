@@ -2,9 +2,11 @@ import React from "react";
 import ReactDOM from "react-dom";
 import { Form, Button } from "semantic-ui-react";
 
+import PopUp from "./PopUp";
+
 import "./EditBox.css";
 
-class EditBox extends React.Component {
+class EditBox extends PopUp {
     constructor(props) {
         super(props);
         this.box = props.box;
@@ -14,8 +16,6 @@ class EditBox extends React.Component {
             fileHash: props.box.fileHash,
         };
     }
-
-    handleChange = (e, { name, value }) => this.setState({ [name]: value });
 
     handleSubmit = () => {
         const { name, description, fileHash } = this.state;
@@ -33,13 +33,6 @@ class EditBox extends React.Component {
     unbox = () => {
         this.box.unbox();
     };
-
-    close() {
-        ReactDOM.render(
-            <React.StrictMode></React.StrictMode>,
-            document.getElementById("popup")
-        );
-    }
 
     render() {
         const { name, description } = this.state;
