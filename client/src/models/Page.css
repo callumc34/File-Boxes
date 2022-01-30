@@ -11,3 +11,7 @@
     height: fit-content;
     padding: 24px !important;
 }
+
+a > .item:hover {
+    background-color: var(--blue) !important;
+}

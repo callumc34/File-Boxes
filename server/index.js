@@ -141,7 +141,7 @@ const FileBoxesApi = class FileBoxesApi {
 
         this.dbAccess.getBoxFromHash(hash).then((result) => {
             const filePath = `${__dirname}/storage/${hash}`;
-            res.download(filePath, `${result[0].name}.csv`);
+            res.download(filePath, `${result.name}.csv`);
         });
     }
 
@@ -170,6 +170,21 @@ const FileBoxesApi = class FileBoxesApi {
         this.dbAccess.getInfoFromToken(req.query.token).then((result) => {
             if (result.error) return res.sendStatus(491);
             return res.type("json").send(JSON.stringify(result));
+        });
+    }
+
+    fileContents(req, res) {
+        const { fileHash } = req.query;
+        if (fileHash == null) return res.sendStatus(400);
+        this.dbAccess.getBoxFromHash(fileHash).then((result) => {
+            if (!result) return res.sendStatus(404);
+
+            const filePath = `${__dirname}/storage/${fileHash}`;
+            if (fs.existsSync(filePath)) {
+                fs.readFile(filePath, "utf-8", (err, data) => {
+                    return res.type("json").send(data);
+                });
+            } else return res.sendStatus(404);
         });
     }
 
@@ -290,7 +305,7 @@ const FileBoxesApi = class FileBoxesApi {
         this.app.get("/api/user", (req, res) =>
             this.usernameFromToken(req, res)
         );
-
+        this.app.get("/api/file", (req, res) => this.fileContents(req, res));
         //Post api
         this.app.post("/api/upload", (req, res) => this.saveFile(req, res));
         this.app.post("/api/uploadfromempty", (req, res) =>

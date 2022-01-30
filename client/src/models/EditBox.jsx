@@ -1,7 +1,6 @@
 import React from "react";
-import ReactDOM from "react-dom";
 import { Form, Button } from "semantic-ui-react";
-
+import Axios from "axios";
 import PopUp from "./PopUp";
 
 import "./EditBox.css";
@@ -34,6 +33,18 @@ class EditBox extends PopUp {
         this.box.unbox();
     };
 
+    preview = () => {
+        this.close();
+
+        Axios.get(`/api/file?fileHash=${this.box.fileHash}`)
+        .then((result) => {
+            this.box.preview(result.data);
+        })
+        .catch((err) => {
+
+        });
+    }
+
     render() {
         const { name, description } = this.state;
 
@@ -59,11 +70,12 @@ class EditBox extends PopUp {
                         onChange={this.handleChange}
                     />
                     <Form.Group widths="equal">
-                        <Form.Button>Submit</Form.Button>
-                        <Form.Button onClick={this.close}>Cancel</Form.Button>
+                        <Button positive>Submit</Button>
+                        <Button onClick={this.close} negative>Cancel</Button>
                     </Form.Group>
                 </Form>
-                <Button onClick={this.unbox}>Unbox</Button>
+                <Button onClick={this.unbox} secondary>Unbox</Button>
+                <Button onClick={this.preview} primary>Preview</Button>    
             </div>
         );
     }

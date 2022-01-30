@@ -245,7 +245,7 @@ const DatabaseAccess = class DatabaseAccess extends MongoClient {
      */
     async getBoxFromHash(fileHash) {
         let boxes = await this.getBoxCollection();
-        return await boxes.find({ fileHash }).toArray();
+        return await boxes.findOne({ fileHash });
     }
 
     /**

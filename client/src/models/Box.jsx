@@ -6,6 +6,7 @@ import { Grid, Card, Segment, Icon, Button } from "semantic-ui-react";
 import BoxCreate from "./BoxCreate";
 import EditBox from "./EditBox";
 import UploadEmpty from "./UploadEmpty";
+import PreviewBox from "./PreviewBox"
 
 import "./Box.css";
 
@@ -43,8 +44,6 @@ class Box extends React.Component {
         this.fileHash = props.fileHash;
     }
 
-    //TODO(Callum) : Add CSV interactions
-    //Renders up to 10
     static renderAll(boxes) {
         var boxBoxes = [];
         for (let box of boxes) {
@@ -93,6 +92,15 @@ class Box extends React.Component {
     download = () => {
         this.downloadFile(false);
     };
+
+    preview = (data) => {
+        ReactDOM.render(
+            <React.StrictMode>
+                <PreviewBox box={this} data={data}/>
+            </React.StrictMode>,
+            document.getElementById("popup")
+        );        
+    }
 
     /**
      * @brief      Downloads a file.
