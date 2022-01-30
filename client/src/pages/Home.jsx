@@ -11,7 +11,7 @@ function Home() {
     const [data, setData] = React.useState(null);
 
     React.useEffect(() => {
-        fetch("/api/all")
+        fetch("/api/public")
             .then((res) => res.json())
             .then((data) => setData(data));
     }, []);
@@ -26,12 +26,6 @@ function Home() {
         );
     };
 
-    const Boxes = () => {
-        <div className="Boxes">
-            {!data ? loader() : Box.renderAll(data.boxes)}
-        </div>;
-    };
-
     class Display extends React.Component {
         render() {
             return (
@@ -40,7 +34,7 @@ function Home() {
                         Public Boxes
                     </Header>
                     <div className="Boxes">
-                        {!data ? loader() : Box.renderAll(data.boxes)}
+                        {!data ? loader() : Box.renderList(data.boxes)}
                     </div>
                 </>
             );

@@ -29,20 +29,46 @@ class Token {
         return delete_cookie(NAME);
     }
 
-    static validate() {
-        return Token.validate(Token.get());
+    /**
+     * Check if token exists
+     *
+     * @return     {Boolean}  true if cookie exists false otherwise
+     */
+    static exists() {
+        return Token.get() != null;
     }
 
-    static validateSpecific(username, token) {
-        var result = false;
-        Axios.post("/api/validate", { username, token })
-            .then((res) => {
-                if (res.status === 200) result = true;
-            })
-            .catch((err) => {
-                result = false;
-            });
-        return result;
+    /**
+     * Check if token is expired
+     *
+     * @return     {Boolean}  true if expired false otherwise.
+     */
+    static async expired() {
+        var result = await Token.getInfo();
+        if (result == null) return null;
+        else return result.expired;
+    }
+
+    /**
+     * Gets the user from the token
+     *
+     * @return     {string}  The username.
+     */
+    static async getUser() {
+        var result = await Token.getInfo();
+        console.log(result);
+        if (result == null) return null;
+        return result.username;
+    }
+
+    /**
+     * Gets the information from the server.
+     *
+     * @return     {Object}  The user information.
+     */
+    static async getInfo() {
+        let result = await Axios.get(`/api/user?token=${Token.get()}`);
+        return result.data;
     }
 }
 

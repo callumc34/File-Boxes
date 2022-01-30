@@ -42,17 +42,14 @@ class Box extends React.Component {
         this.name = props.name;
         this.description = props.description;
         this.fileHash = props.fileHash;
+        this.username = props.username;
     }
 
-    static renderAll(boxes) {
+    static renderList(boxes) {
         var boxBoxes = [];
         for (let box of boxes) {
             boxBoxes.push(
-                new Box({
-                    name: box.name,
-                    description: box.description,
-                    fileHash: box.fileHash,
-                })
+                new Box(box)
             );
         }
 
@@ -188,7 +185,7 @@ class Box extends React.Component {
             <Card
                 header={this.name}
                 description={this.description}
-                meta="Username"
+                meta={this.username ? this.username : "unknown"}
                 extra={extra}
             />
         );

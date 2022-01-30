@@ -20,7 +20,7 @@ const corsOptions = {
 };
 
 //Local requires
-const { Box, createBox } = require("../models");
+const { Box } = require("../models");
 const DatabaseAccess = require("../database").DatabaseAccess;
 
 /**
@@ -80,7 +80,7 @@ const FileBoxesApi = class FileBoxesApi {
      * @param      {Response}  res     The response
      */
     add(req, res) {
-        var box = createBox(req.query);
+        var box = Box.fromObj(req.query);
         if (box != null) {
             this.dbAccess.addBox(box).then(() => res.sendStatus(200));
         } else res.sendStatus(550);
@@ -126,7 +126,21 @@ const FileBoxesApi = class FileBoxesApi {
      * @param      {Response}  res     The response
      */
     all(req, res) {
-        this.dbAccess.getAllBoxes(res);
+        this.dbAccess.findBoxes({}).then((result) => {
+            res.json({ boxes: result });
+        });
+    }
+
+    /**
+     * Get all public boxes
+     *
+     * @param      {<type>}  req     The request
+     * @param      {<type>}  res     The resource
+     */
+    publicBoxes(req, res) {
+        this.dbAccess.findBoxes({ public: true }).then((result) => {
+            res.json({ boxes: result });
+        });
     }
 
     /**
@@ -152,15 +166,13 @@ const FileBoxesApi = class FileBoxesApi {
      * @param      {Response}  res     The response
      */
     emptyBox(req, res) {
-        this.dbAccess
-            .addBox(new Box(req.query.name, req.query.description, null))
-            .then(() => {
-                res.sendStatus(200);
-            });
+        this.dbAccess.addBox(Box.fromObj(req.query)).then(() => {
+            res.sendStatus(200);
+        });
     }
 
     /**
-     * Get username from token
+     * Authenticate from token
      *
      * @param      {Request}  req     The request
      * @param      {Response}  res     The response
@@ -169,10 +181,16 @@ const FileBoxesApi = class FileBoxesApi {
         if (req.query.token == null) return res.sendStatus(400);
         this.dbAccess.getInfoFromToken(req.query.token).then((result) => {
             if (result.error) return res.sendStatus(491);
-            return res.type("json").send(JSON.stringify(result));
+            return res.json(result);
         });
     }
 
+    /**
+     * Get the contents of a csv file
+     *
+     * @param      {Request}  req     The request
+     * @param      {Response}  res     The resource
+     */
     fileContents(req, res) {
         const { fileHash } = req.query;
         if (fileHash == null) return res.sendStatus(400);
@@ -182,7 +200,7 @@ const FileBoxesApi = class FileBoxesApi {
             const filePath = `${__dirname}/storage/${fileHash}`;
             if (fs.existsSync(filePath)) {
                 fs.readFile(filePath, "utf-8", (err, data) => {
-                    return res.type("json").send(data);
+                    return res.json(data);
                 });
             } else return res.sendStatus(404);
         });
@@ -196,7 +214,6 @@ const FileBoxesApi = class FileBoxesApi {
      */
     saveFile(req, res) {
         let uploadFile = req.files.file;
-        const { name, description } = req.body;
 
         const hash = calcHash(uploadFile.data);
 
@@ -207,7 +224,7 @@ const FileBoxesApi = class FileBoxesApi {
             if (err) return res.sendStatus(500);
             else {
                 this.dbAccess
-                    .addBox(new Box(name, description, hash))
+                    .addBox(Box.fromObj(req.body))
                     .then(() => res.sendStatus(200));
             }
         });
@@ -263,7 +280,7 @@ const FileBoxesApi = class FileBoxesApi {
             //Login success - return token
             this.dbAccess.createTokenDefault(username).then((result) => {
                 if (!result.token) return res.status(491);
-                return res.type("json").send(JSON.stringify(result));
+                return res.json(result);
             });
         });
     }
@@ -300,6 +317,7 @@ const FileBoxesApi = class FileBoxesApi {
             this.deleteName(req, res)
         );
         this.app.get("/api/all", (req, res) => this.all(req, res));
+        this.app.get("/api/public", (req, res) => this.publicBoxes(req, res));
         this.app.get("/api/download", (req, res) => this.download(req, res));
         this.app.get("/api/emptybox", (req, res) => this.emptyBox(req, res));
         this.app.get("/api/user", (req, res) =>

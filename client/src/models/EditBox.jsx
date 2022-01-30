@@ -1,5 +1,8 @@
 import React from "react";
-import { Form, Button } from "semantic-ui-react";
+import { Form,
+    Button,
+    Message
+} from "semantic-ui-react";
 import Axios from "axios";
 import PopUp from "./PopUp";
 
@@ -13,6 +16,9 @@ class EditBox extends PopUp {
             name: props.box.name,
             description: props.box.description,
             fileHash: props.box.fileHash,
+            username: props.box.username,
+            isPublic: props.box.public,
+            showError: false
         };
     }
 
@@ -30,6 +36,10 @@ class EditBox extends PopUp {
     };
 
     unbox = () => {
+        if (this.state.fileHash === null) {
+            this.setState({ showError: true });
+            return;
+        }
         this.box.unbox();
     };
 
@@ -50,6 +60,13 @@ class EditBox extends PopUp {
 
         return (
             <div className="PopUpBox">
+                {!this.state.showError ? null : 
+                    <Message negative>
+                        <Message.Header as="a" to="/login">
+                            Unable to unbox an empty box
+                        </Message.Header>
+                    </Message>
+                }
                 <Form onSubmit={this.handleSubmit}>
                     <Form.Input
                         required

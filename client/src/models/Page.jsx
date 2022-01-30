@@ -1,3 +1,5 @@
+import React, { useState } from "react";
+
 import {
     Divider,
     Menu,
@@ -7,6 +9,8 @@ import {
     Sidebar,
 } from "semantic-ui-react";
 import { Link } from "react-router-dom";
+
+import Token from "../auth/Token"
 
 import "./Page.css";
 
@@ -24,6 +28,16 @@ function Page(Main) {
             </>
         );
     }
+
+    const [user, setUser] = useState({});
+
+    React.useEffect(() => {
+        Token.getInfo().then((result) => setUser(result));
+    }, []);
+
+    const LoginName = (
+        <Header as="h3" inverted>Logged in as: {user.username}</Header>
+    );
 
     return (
         <div className="App">
@@ -45,7 +59,7 @@ function Page(Main) {
                     <Menu.Item>
                         <List>
                             <List.Item>
-                                <Icon name="box" inverted size="very large" />
+                                <Icon name="box" inverted size="massive" />
                             </List.Item>
                             <List.Content>
                                 <List.Item>
@@ -58,6 +72,8 @@ function Page(Main) {
                     {createMenuLink("/boxes", "box", "My boxes")}
                     {createMenuLink("/login", "sign in", "Login")}
                     {createMenuLink("/logout", "sign out", "Logout")}
+                    {(!Token.exists() || !user.expired) ? LoginName : null}
+                    <Divider />
                 </Sidebar>
                 <Sidebar.Pusher>
                     <div className="Main">

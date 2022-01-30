@@ -53,16 +53,18 @@ const DatabaseAccess = class DatabaseAccess extends MongoClient {
      * Gets the information from token.
      *
      * @param      {string}   token   The token
-     * @return     {Promise}  { User }.
+     * @return     {Promise}  { username, expired }.
      */
     async getInfoFromToken(token) {
-        let valid = await this.validateToken(token);
-        if (!valid.valid) return { error: "Fake token" };
-
         let tokens = await this.getTokenCollection();
-        let username = await tokens.findOne({ token });
+        let user = await tokens.findOne({ token });
 
-        return username;
+        if (user == null) return { error: "No user found" };
+
+        return {
+            username: user.username,
+            expired: Date.now() > user.expires ? true : false,
+        };
     }
 
     /**
@@ -191,16 +193,9 @@ const DatabaseAccess = class DatabaseAccess extends MongoClient {
     async addBox(box) {
         let boxes = await this.getBoxCollection();
         await boxes.deleteMany({ name: box.name });
-        return await boxes.insertOne(
-            {
-                name: box.name,
-                description: box.description,
-                fileHash: box.fileHash,
-            },
-            (err) => {
-                if (err) console.log(err);
-            }
-        );
+        return await boxes.insertOne(box, (err) => {
+            if (err) console.log(err);
+        });
     }
 
     /**
@@ -249,16 +244,14 @@ const DatabaseAccess = class DatabaseAccess extends MongoClient {
     }
 
     /**
-     * Gets all boxes from the mongodb
-     * @param      {Response} Response to return to
+     * Finds boxes from query
      *
-     * @return     {Array}  All boxes in the mongodb.
+     * @param      {Object}   Query   The query
+     * @return     {Promise}  [ Found boxes ]
      */
-    async getAllBoxes(res) {
+    async findBoxes(Query) {
         let boxes = await this.getBoxCollection();
-        return await boxes.find({}).toArray((err, result) => {
-            res.json({ boxes: result });
-        });
+        return await boxes.find(Query).toArray();
     }
 };
 

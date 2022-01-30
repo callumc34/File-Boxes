@@ -1,8 +1,12 @@
 import React from "react";
-import ReactDOM from "react-dom";
-import { Form } from "semantic-ui-react";
+import { 
+    Form,
+    Message
+} from "semantic-ui-react";
 
 import PopUp from "./PopUp";
+
+import Token from "../auth/Token";
 
 import "./BoxCreate.css";
 
@@ -11,7 +15,21 @@ class BoxCreate extends PopUp {
         name: "",
         description: "",
         selectedFile: "",
+        public: false,
+        tokenExists: Token.exists(), //Check if theyre supposed to be logged in
+        expired: false,
+        username: null
     };
+
+    componentDidMount() {        
+        Token.expired().then((result) => {
+            if (result) this.setState({ expired: true });
+        });
+
+        Token.getUser().then((result) => {
+            if (result != null) this.setState({ username:  result });
+        })
+    }
 
     handleFileChange = (e) => {
         this.setState({ selectedFile: e.target.files[0] });
@@ -22,6 +40,19 @@ class BoxCreate extends PopUp {
         const data = new FormData();
         data.append("name", this.state.name);
         data.append("description", this.state.description);
+
+        //Logged in functionality
+        if (this.state.tokenExists) {
+            if (this.state.expired) {
+                return;
+            } else {
+                data.append("username", Token.getUser());
+                data.append("public", this.state.public);
+            } 
+        } else {
+                data.append("public", true);
+        }
+
         if (this.state.selectedFile) {
             data.append("file", this.state.selectedFile);
             fetch("/api/upload", {
@@ -30,7 +61,10 @@ class BoxCreate extends PopUp {
             }).then((res) => {});
         } else {
             fetch(
-                `/api/emptybox?name=${this.state.name}&description=${this.state.description}`
+                `/api/emptybox?name=${this.state.name}\
+                &description=${this.state.description}\
+                &username=${this.state.username}\
+                &public=${this.state.public ? 1 : 0}`
             ).then((res) => {});
         }
         this.setState({ name: "", description: "", selectedFile: "" });
@@ -42,6 +76,13 @@ class BoxCreate extends PopUp {
     render() {
         return (
             <div className="PopUpBox">
+                {!this.state.expired ? null : 
+                    <Message negative>
+                        <Message.Header as="a" to="/login">
+                            Sorry, your session has expired please login to submit.
+                        </Message.Header>
+                    </Message>
+                }
                 <Form onSubmit={this.handleSubmit}>
                     <Form.Input
                         required
@@ -65,6 +106,15 @@ class BoxCreate extends PopUp {
                         label="File upload"
                         onChange={this.handleFileChange}
                     />
+                    <Form.Checkbox
+                        label={
+                            Token.exists() ? "Public" :
+                            "Public - Please login to change visibility"
+                        }
+                        name="public"
+                        disabled={!Token.exists()}
+                        onChange={this.handleChange}
+                     /> 
                     <Form.Group widths="equal">
                         <Form.Button>Submit</Form.Button>
                         <Form.Button onClick={this.close}>Cancel</Form.Button>
