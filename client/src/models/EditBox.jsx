@@ -19,28 +19,28 @@ class EditBox extends PopUp {
             description: props.box.description,
             fileHash: props.box.fileHash,
             public: props.box.public,
+            _id: props.box._id,
             selectedFile: "",
-            showError: props.box.fileHash == null ? true : false,
-            error: "Unable to edit empty box"
+            showError: false,
+            error: ""
         };
     }
 
     handleSubmit = () => {
-        if (this.state.fileHash == null) return;
         fetch(`
-            http://localhost:5000/api/edit?fileHash=${this.state.fileHash}\
+            http://localhost:5000/api/edit?\
+_id=${this.state._id}\
+&fileHash=${this.state.fileHash}\
 &name=${this.state.name}\
 &description=${this.state.description}\
 &username=${this.state.username}\
 &public=${this.state.public ? 1 : 0}
         `).then(
-            (res) => {}
+            (res) => {
+                this.close();
+                window.location.reload();
+            }
         );
-
-        this.setState({ name: "", description: "", selectedFile: "" });
-        //TODO(Callum) : Show confirmation message
-        this.close();
-        window.location.reload(false);
     };
 
     unbox = () => {
@@ -64,13 +64,17 @@ class EditBox extends PopUp {
         }
         this.close();
 
-        Axios.get(`/api/file?fileHash=${this.box.fileHash}`)
+        Axios.get(`/api/file?_id=${this.box._id}`)
         .then((result) => {
             this.box.preview(result.data);
         })
         .catch((err) => {
 
         });
+    }
+
+    delete = () => {
+        this.box.delete();
     }
 
     render() {
@@ -111,6 +115,7 @@ class EditBox extends PopUp {
                         }
                         name="public"
                         disabled={!Token.exists()}
+                        checked={this.state.public}
                         onChange={this.handleCheckbox}
                      /> 
                     <Form.Group widths="equal">
@@ -119,7 +124,8 @@ class EditBox extends PopUp {
                     </Form.Group>
                 </Form>
                 <Button onClick={this.unbox} secondary>Unbox</Button>
-                <Button onClick={this.preview} primary>Preview</Button>    
+                <Button onClick={this.preview} primary>Preview</Button>
+                <Button onClick={this.delete} negative>Delete</Button>
             </div>
         );
     }

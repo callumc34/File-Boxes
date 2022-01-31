@@ -7,12 +7,13 @@ const Box = class Box {
      * @param      {int}  fileHash       The file identifier for the box
      * @param      {string} username    The username associated
      */
-    constructor(name, description, fileHash, username, isPublic) {
+    constructor(name, description, fileHash, username, isPublic, id) {
         this.name = name;
         this.description = description;
         this.fileHash = fileHash;
-        this.username = username;
+        this.username = username != "undefined" ? username : null;
         this.public = isPublic;
+        this._id = id;
     }
 
     /**
@@ -28,7 +29,8 @@ const Box = class Box {
             obj.description,
             obj.fileHash,
             obj.username,
-            !!parseInt(obj.public)
+            !!parseInt(obj.public),
+            obj._id
         );
     }
 };

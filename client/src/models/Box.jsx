@@ -8,6 +8,8 @@ import EditBox from "./EditBox";
 import UploadEmpty from "./UploadEmpty";
 import PreviewBox from "./PreviewBox"
 
+import Token from "../auth/Token";
+
 import "./Box.css";
 
 class AddBox extends React.Component {
@@ -44,6 +46,7 @@ class Box extends React.Component {
         this.fileHash = props.fileHash;
         this.public = props.public;
         this.username = props.username;
+        this._id = props._id; 
     }
 
     static renderList(boxes) {
@@ -56,7 +59,7 @@ class Box extends React.Component {
 
         do {
             boxBoxes.push(new AddBox(boxBoxes.length));
-        } while (boxBoxes.length < 6);
+        } while (boxBoxes.length % 3 != 0 || boxBoxes.length < 6);
 
         var boxRows = [];
         while (boxBoxes.length > 0) {
@@ -91,6 +94,13 @@ class Box extends React.Component {
         this.downloadFile(false);
     };
 
+    delete = () => {
+        Axios.get(`/api/delete?_id=${this._id}\
+${Token.exists() ? `&token=${Token.get()}` : ""}`).then((result) => {
+                window.location.reload();
+            });
+    }
+
     preview = (data) => {
         ReactDOM.render(
             <React.StrictMode>
@@ -106,7 +116,7 @@ class Box extends React.Component {
      * @param      {boolean}  Whether to unbox
      */
     downloadFile(unbox) {
-        Axios.get(`api/download?fileHash=${this.fileHash}`, {
+        Axios.get(`api/download?_id=${this._id}`, {
             responseType: "blob",
         }).then((response) => {
             const fileURL = window.URL.createObjectURL(
@@ -120,9 +130,9 @@ class Box extends React.Component {
             fileLink.click();
             fileLink.remove();
             if (unbox)
-                Axios.get(`api/delete?fileHash=${this.fileHash}`).then(() =>
-                    window.location.reload(true)
-                );
+                this.delete();
+        }).then(() => {
+            window.location.reload();
         });
     }
 

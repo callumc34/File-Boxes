@@ -70,7 +70,10 @@ const FileBoxesApi = class FileBoxesApi {
      * @param      {Response}}  res     The response
      */
     edit(req, res) {
-        this.dbAccess.editBox(req.query).then(() => res.sendStatus(200));
+        this.dbAccess.editBox(req.query).then((result) => {
+            if (!result.acknowledged) return res.sendStatus(550);
+            return res.sendStatus(200);
+        });
     }
 
     /**
@@ -93,30 +96,50 @@ const FileBoxesApi = class FileBoxesApi {
      * @param      {Response}  res     The response
      */
     delete(req, res) {
-        const hash = req.query.fileHash;
-        if (hash == undefined) return res.sendStatus(550);
+        const { token, _id } = req.query;
+        if (_id == undefined) return res.sendStatus(550);
 
-        const filePath = `${__dirname}/storage/${hash}`;
-        if (fs.existsSync(filePath)) {
-            fs.unlink(filePath, (err) => {
-                if (err) {
-                    console.log(err);
+        //
+        if (token != undefined) {
+            this.dbAccess
+                .getInfoFromToken(token)
+                .then((result) => {
+                    if (result.error || result.expired)
+                        return res.sendStatus(491);
+                    return result.username;
+                })
+                .then((username) => {
+                    this.dbAccess.getBoxFromId(_id).then((box) => {
+                        if (box.username == username) {
+                            const filePath = `${__dirname}/storage/${_id}`;
+                            if (fs.existsSync(filePath)) {
+                                fs.unlink(filePath, (err) => {});
+                            }
+
+                            this.dbAccess.removeBox(_id).then((result) => {
+                                res.sendStatus(200);
+                            });
+                        } else {
+                            res.send(401);
+                        }
+                    });
+                });
+        } else {
+            this.dbAccess.getBoxFromId(_id).then((box) => {
+                if (box.username == null) {
+                    const filePath = `${__dirname}/storage/${_id}`;
+                    if (fs.existsSync(filePath)) {
+                        fs.unlink(filePath, (err) => {});
+                    }
+
+                    this.dbAccess.removeBox(_id).then((result) => {
+                        res.sendStatus(200);
+                    });
+                } else {
+                    res.sendStatus(401);
                 }
             });
-            this.dbAccess.removeBox(hash).then(() => res.sendStatus(200));
         }
-    }
-
-    /**
-     * Deletes a box based on the name
-     *
-     * @param      {Request}  req     The request
-     * @param      {Response}  res     The response
-     */
-    deleteName(req, res) {
-        this.dbAccess.removeNamedBox(req.query.name).then(() => {
-            res.sendStatus(200);
-        });
     }
 
     /**
@@ -144,17 +167,35 @@ const FileBoxesApi = class FileBoxesApi {
     }
 
     /**
+     * Gets the users boxes
+     *
+     * @param      {Request}  req     The request
+     * @param      {Response}  res     The response
+     */
+    userBoxes(req, res) {
+        const token = req.query.token;
+        if (token == null) return res.sendStatus(401);
+        this.dbAccess.getInfoFromToken(token).then((result) => {
+            this.dbAccess
+                .findBoxes({ username: result.username })
+                .then((result) => {
+                    res.json({ boxes: result });
+                });
+        });
+    }
+
+    /**
      * Download the desired hash file
      *
      * @param      {Request}  req     The request
      * @param      {Response}  res     The response
      */
     download(req, res) {
-        const hash = req.query.fileHash;
-        if (hash == undefined || hash == "null") return res.sendStatus(550);
+        const _id = req.query._id;
+        if (_id == undefined || _id == "null") return res.sendStatus(550);
 
-        this.dbAccess.getBoxFromHash(hash).then((result) => {
-            const filePath = `${__dirname}/storage/${hash}`;
+        this.dbAccess.getBoxFromId(_id).then((result) => {
+            const filePath = `${__dirname}/storage/${_id}`;
             res.download(filePath, `${result.name}.csv`);
         });
     }
@@ -192,12 +233,13 @@ const FileBoxesApi = class FileBoxesApi {
      * @param      {Response}  res     The resource
      */
     fileContents(req, res) {
-        const { fileHash } = req.query;
-        if (fileHash == null) return res.sendStatus(400);
-        this.dbAccess.getBoxFromHash(fileHash).then((result) => {
+        const { _id } = req.query;
+        if (_id == null || _id == "undefined" || _id == "null")
+            return res.sendStatus(400);
+        this.dbAccess.getBoxFromId(_id).then((result) => {
             if (!result) return res.sendStatus(404);
 
-            const filePath = `${__dirname}/storage/${fileHash}`;
+            const filePath = `${__dirname}/storage/${_id}`;
             if (fs.existsSync(filePath)) {
                 fs.readFile(filePath, "utf-8", (err, data) => {
                     return res.json(data);
@@ -222,13 +264,15 @@ const FileBoxesApi = class FileBoxesApi {
         //TODO(Callum) : Checks for duplicates
         fs.mkdir(`${__dirname}/storage`, () => {});
 
-        uploadFile.mv(`${__dirname}/storage/${hash}`, (err) => {
-            if (err) return res.sendStatus(500);
-            else {
-                this.dbAccess
-                    .addBox(Box.fromObj(boxInfo))
-                    .then(() => res.sendStatus(200));
-            }
+        this.dbAccess.addBox(Box.fromObj(boxInfo)).then((result) => {
+            if (!result.acknowledged) return res.sendStatus(550);
+            uploadFile.mv(
+                `${__dirname}/storage/${result.insertedId}`,
+                (err) => {
+                    if (err) return res.sendStatus(500);
+                    else return res.sendStatus(200);
+                }
+            );
         });
     }
 
@@ -239,9 +283,7 @@ const FileBoxesApi = class FileBoxesApi {
      * @param      {Response}  res     The response
      */
     uploadFromEmpty(req, res) {
-        this.dbAccess.removeNamedBox(req.body.name).then(() => {
-            this.saveFile(req, res);
-        });
+        this.saveFile(req, res);
     }
 
     //Login/Signup
@@ -320,6 +362,7 @@ const FileBoxesApi = class FileBoxesApi {
         );
         this.app.get("/api/all", (req, res) => this.all(req, res));
         this.app.get("/api/public", (req, res) => this.publicBoxes(req, res));
+        this.app.get("/api/boxes", (req, res) => this.userBoxes(req, res));
         this.app.get("/api/download", (req, res) => this.download(req, res));
         this.app.get("/api/emptybox", (req, res) => this.emptyBox(req, res));
         this.app.get("/api/user", (req, res) =>

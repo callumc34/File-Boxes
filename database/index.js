@@ -1,4 +1,4 @@
-const MongoClient = require("mongodb").MongoClient;
+const { MongoClient, ObjectId } = require("mongodb");
 const crypto = require("crypto");
 
 const { DB_USERNAME, DB_PASSWORD, DB_URL, DB_NAME } = require("./secrets");
@@ -191,11 +191,10 @@ const DatabaseAccess = class DatabaseAccess extends MongoClient {
      * @param      {Box}  box     The box to add
      */
     async addBox(box) {
+        box._id = new ObjectId(box._id);
         let boxes = await this.getBoxCollection();
-        await boxes.deleteMany({ name: box.name });
-        return await boxes.insertOne(box, (err) => {
-            if (err) console.log(err);
-        });
+        await boxes.deleteMany({ _id: box._id });
+        return await boxes.insertOne(box);
     }
 
     /**
@@ -204,43 +203,40 @@ const DatabaseAccess = class DatabaseAccess extends MongoClient {
      * @param      {Object}  box     The box to be edited
      */
     async editBox(box) {
-        if (box.fileHash == null) return false;
+        if (box._id == null) return false;
+
         let boxes = await this.getBoxCollection();
         return await boxes.updateMany(
-            { fileHash: box.fileHash },
-            { $set: box }
+            { _id: new ObjectId(box._id) },
+            {
+                $set: {
+                    name: box.name,
+                    description: box.description,
+                    public: !!parseInt(box.public),
+                },
+            }
         );
     }
 
     /**
-     * Removes a named box.
+     * Removes a box. based on its id
      *
-     * @param      {String}  name    The name
+     * @param      {String}  _id  The box id
      */
-    async removeNamedBox(name) {
+    async removeBox(id) {
         let boxes = await this.getBoxCollection();
-        return await boxes.deleteMany({ name });
+        return await boxes.deleteMany({ _id: new ObjectId(id) });
     }
 
     /**
-     * Removes a box. based on its hash
+     * Gets the box from id.
      *
-     * @param      {String}  fileHash  The file hash
-     */
-    async removeBox(fileHash) {
-        let boxes = await this.getBoxCollection();
-        return await boxes.deleteMany({ fileHash });
-    }
-
-    /**
-     * Gets the box from hash.
-     *
-     * @param      {String}  fileHash  The file hash
+     * @param      {String}  _id  The file id
      * @return     {Object}  The box from hash.
      */
-    async getBoxFromHash(fileHash) {
+    async getBoxFromId(_id) {
         let boxes = await this.getBoxCollection();
-        return await boxes.findOne({ fileHash });
+        return await boxes.findOne({ _id: new ObjectId(_id) });
     }
 
     /**

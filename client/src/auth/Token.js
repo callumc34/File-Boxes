@@ -35,7 +35,7 @@ class Token {
      * @return     {Boolean}  true if cookie exists false otherwise
      */
     static exists() {
-        return Token.get() != null;
+        return Token.get().length != 0;
     }
 
     /**

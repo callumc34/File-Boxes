@@ -1,24 +1,24 @@
 import React from "react";
 import { Loader, Header } from "semantic-ui-react";
 
-import "semantic-ui-css/semantic.min.css";
-import "./Home.css";
-
 import Page from "../models/Page";
 import Box from "../models/Box";
 
-function Home() {
+import Token from "../auth/Token";
+
+
+function UsersBoxes() {
     const [data, setData] = React.useState(null);
 
     React.useEffect(() => {
-        fetch("/api/public")
+        fetch(`/api/boxes?token=${Token.get()}`)
             .then((res) => res.json())
             .then((data) => setData(data));
     }, []);
-    
+
     const loader = () => {
         return (
-            <Loader inverted content="Loading" />
+                <Loader inverted content="Loading" />
         );
     };
 
@@ -27,7 +27,7 @@ function Home() {
             return (
                 <>
                     <Header as="h1" className="BoxesHeader">
-                        Public Boxes
+                        My Boxes
                     </Header>
                     <div className="Boxes">
                         {!data ? loader() : Box.renderList(data.boxes)}
@@ -40,4 +40,4 @@ function Home() {
     return Page(Display);
 }
 
-export default Home;
+export default UsersBoxes;

@@ -32,6 +32,7 @@ function Page(Main) {
     const [user, setUser] = useState({});
 
     React.useEffect(() => {
+        if (!Token.exists()) return;
         Token.getInfo().then((result) => setUser(result));
     }, []);
 
@@ -72,7 +73,7 @@ function Page(Main) {
                     {createMenuLink("/boxes", "box", "My boxes")}
                     {createMenuLink("/login", "sign in", "Login")}
                     {createMenuLink("/logout", "sign out", "Logout")}
-                    {(!Token.exists() || !user.expired) ? LoginName : null}
+                    {(Token.exists() && !user.expired) ? LoginName : null}
                     <Divider />
                 </Sidebar>
                 <Sidebar.Pusher>

@@ -15,10 +15,8 @@ class BoxCreate extends PopUp {
         name: "",
         description: "",
         selectedFile: "",
-        public: false,
-        tokenExists: Token.exists(), //Check if theyre supposed to be logged in
-        expired: false,
-        username: null
+        public: !Token.exists(),
+        tokenExists: Token.exists()
     };
     
     handleFileChange = (e) => {
@@ -39,9 +37,10 @@ class BoxCreate extends PopUp {
             } else {
                 data.append("username", this.state.username);
                 data.append("public", this.state.public ? 1 : 0);
+                data.append("token", Token.get());
             } 
         } else {
-                data.append("public", true);
+                data.append("public", 1);
         }
 
         if (this.state.selectedFile) {
@@ -49,19 +48,21 @@ class BoxCreate extends PopUp {
             fetch("/api/upload", {
                 method: "POST",
                 body: data,
-            }).then((res) => {});
+            }).then((res) => {
+                this.close();
+                window.location.reload();
+            });
         } else {
             fetch(
                 `/api/emptybox?name=${this.state.name}\
 &description=${this.state.description}\
 &username=${this.state.username}\
-&public=${this.state.public ? 1 : 0}`
-            ).then((res) => {});
+&public=${this.state.public ? 1 : 0}\
+${(this.state.tokenExists) ? `&token=${Token.get()}` : ""}`).then((res) => {
+                this.close();
+                window.location.reload();
+            });
         }
-        this.setState({ name: "", description: "", selectedFile: "" });
-        //TODO(Callum) : Show confirmation message
-        this.close();
-        window.location.reload(false);
     };
 
     render() {
@@ -103,7 +104,8 @@ class BoxCreate extends PopUp {
                             "Public - Please login to change visibility"
                         }
                         name="public"
-                        disabled={!Token.exists()}
+                        disabled={!this.state.tokenExists}                        
+                        checked={this.state.public}
                         onChange={this.handleCheckbox}
                      /> 
                     <Form.Group widths="equal">

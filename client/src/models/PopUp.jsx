@@ -23,7 +23,7 @@ class PopUp extends React.Component {
 
         Token.getUser().then((result) => {
             if (result != null) this.setState({ username:  result });
-        })
+        });
     }
 
     close() {

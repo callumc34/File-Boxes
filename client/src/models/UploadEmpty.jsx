@@ -15,6 +15,7 @@ class UploadEmpty extends PopUp {
             description: props.box.description,
             fileHash: props.box.fileHash,
             public: props.box.public,
+            _id: props.box._id
         };
     }
 
@@ -29,6 +30,7 @@ class UploadEmpty extends PopUp {
         data.append("file", this.state.selectedFile);
         data.append("username", this.state.username);
         data.append("public", this.state.public ? 1 : 0);
+        data.append("_id", this.state._id);
         fetch("/api/uploadfromempty", {
             method: "POST",
             body: data,
