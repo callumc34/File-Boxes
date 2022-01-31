@@ -4,6 +4,10 @@ import { bake_cookie, read_cookie, delete_cookie } from "sfcookies";
 const NAME = "token";
 
 class Token {
+    static toURLString() {
+        return Token.exists() ? `&token=${Token.get()}` : "";
+    }
+
     /**
      * Get the token from cookies
      *

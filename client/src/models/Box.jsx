@@ -96,7 +96,7 @@ class Box extends React.Component {
 
     delete = () => {
         Axios.get(`/api/delete?_id=${this._id}\
-${Token.exists() ? `&token=${Token.get()}` : ""}`).then((result) => {
+${Token.toURLString()}`).then((result) => {
                 window.location.reload();
             });
     }
@@ -116,7 +116,7 @@ ${Token.exists() ? `&token=${Token.get()}` : ""}`).then((result) => {
      * @param      {boolean}  Whether to unbox
      */
     downloadFile(unbox) {
-        Axios.get(`api/download?_id=${this._id}`, {
+        Axios.get(`api/download?_id=${this._id}${Token.toURLString()}`, {
             responseType: "blob",
         }).then((response) => {
             const fileURL = window.URL.createObjectURL(

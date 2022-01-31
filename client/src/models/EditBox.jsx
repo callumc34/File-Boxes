@@ -34,9 +34,8 @@ _id=${this.state._id}\
 &name=${this.state.name}\
 &description=${this.state.description}\
 &username=${this.state.username}\
-&public=${this.state.public ? 1 : 0}
-        `).then(
-            (res) => {
+&public=${this.state.public}\
+${Token.toURLString()}`).then((res) => {
                 this.close();
                 window.location.reload();
             }
@@ -64,7 +63,7 @@ _id=${this.state._id}\
         }
         this.close();
 
-        Axios.get(`/api/file?_id=${this.box._id}`)
+        Axios.get(`/api/file?_id=${this.box._id}${Token.toURLString()}`)
         .then((result) => {
             this.box.preview(result.data);
         })

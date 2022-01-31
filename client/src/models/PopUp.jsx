@@ -8,6 +8,15 @@ import "./PopUp.css"
 class PopUp extends React.Component {
     state = {};
 
+    finished() {
+        this.close();
+        window.location.reload();
+    }
+
+    error(error) {
+        this.setState({ showError: true, error });
+    }
+
     handleChange = (e, { name, value }) => {
         this.setState({ [name]: value });
     }

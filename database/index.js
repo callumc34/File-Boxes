@@ -58,8 +58,11 @@ const DatabaseAccess = class DatabaseAccess extends MongoClient {
     async getInfoFromToken(token) {
         let tokens = await this.getTokenCollection();
         let user = await tokens.findOne({ token });
-
-        if (user == null) return { error: "No user found" };
+        
+        if (!user) return {
+            username: null,
+            expired: false
+        };
 
         return {
             username: user.username,
@@ -96,7 +99,7 @@ const DatabaseAccess = class DatabaseAccess extends MongoClient {
         });
 
         if (result.acknowledged) {
-            let find = await this.hasToken(username);
+            let find = await this._hasToken(username);
             if (find.error || find.expired)
                 return { error: "Error finding token" };
             return { token: find.token, error: false };
@@ -112,9 +115,12 @@ const DatabaseAccess = class DatabaseAccess extends MongoClient {
      */
     async validateToken(username, token) {
         let tokens = await this.getTokenCollection();
-        let found = await this.hasToken(username);
+        let found = await this._hasToken(username);
         if (!found.token) return { valid: false };
-        else return { valid: token === found.token ? true : false };
+        else return {
+            valid: ((token === found.token) && !found.expired) ?
+                true : false
+        };
     }
 
     /**
@@ -123,7 +129,7 @@ const DatabaseAccess = class DatabaseAccess extends MongoClient {
      * @param      {string}   username  The username
      * @return     {Promise}  { token, expired, error }.
      */
-    async hasToken(username) {
+    async _hasToken(username) {
         let tokens = await this.getTokenCollection();
 
         let user = await tokens.findOne({ username });
@@ -191,9 +197,10 @@ const DatabaseAccess = class DatabaseAccess extends MongoClient {
      * @param      {Box}  box     The box to add
      */
     async addBox(box) {
-        box._id = new ObjectId(box._id);
-        let boxes = await this.getBoxCollection();
-        await boxes.deleteMany({ _id: box._id });
+        var boxes = await this.getBoxCollection();
+        if (box._id) {
+            await boxes.deleteMany({ _id: new ObjectId(box._id) });
+        }
         return await boxes.insertOne(box);
     }
 
@@ -212,9 +219,19 @@ const DatabaseAccess = class DatabaseAccess extends MongoClient {
                 $set: {
                     name: box.name,
                     description: box.description,
-                    public: !!parseInt(box.public),
+                    fileHash: box.fileHash,
+                    username: box.username,
+                    public: box.public
                 },
             }
+        );
+    }
+
+    async updateBoxHash(id, fileHash) {
+        let boxes = await this.getBoxCollection();
+        return await boxes.updateMany(
+            { _id: new ObjectId(id) },
+            { $set: { fileHash }}
         );
     }
 

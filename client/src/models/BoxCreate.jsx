@@ -24,45 +24,41 @@ class BoxCreate extends PopUp {
     };
 
     handleSubmit = () => {
-        //Handle file upload
-        
-        const data = new FormData();
-        data.append("name", this.state.name);
-        data.append("description", this.state.description);
-
-        //Logged in functionality
-        if (this.state.tokenExists) {
-            if (this.state.expired) {
+        fetch(
+            `/api/add?\
+name=${this.state.name}&\
+description=${this.state.description}&\
+&public=${this.state.public}\
+${Token.toURLString()}`)
+        .then((response) => {
+            return response.json();
+        })
+        .then((json) => {
+            //Nothing to upload so leave
+            if (!this.state.selectedFile) {
+                this.finished();
                 return;
-            } else {
-                data.append("username", this.state.username);
-                data.append("public", this.state.public ? 1 : 0);
-                data.append("token", Token.get());
-            } 
-        } else {
-                data.append("public", 1);
-        }
+            }
 
-        if (this.state.selectedFile) {
+            let _id = json._id;
+            const data = new FormData();
+
+            data.append("_id", _id);
+            if (Token.exists()) data.append("token", Token.get());
             data.append("file", this.state.selectedFile);
             fetch("/api/upload", {
                 method: "POST",
-                body: data,
-            }).then((res) => {
-                this.close();
-                window.location.reload();
+                body: data
+            }).then((response) => {
+                this.finished();
+            })
+            .catch((err) => {
+                this.error(err);
             });
-        } else {
-            fetch(
-                `/api/emptybox?name=${this.state.name}\
-&description=${this.state.description}\
-&username=${this.state.username}\
-&public=${this.state.public ? 1 : 0}\
-${(this.state.tokenExists) ? `&token=${Token.get()}` : ""}`).then((res) => {
-                this.close();
-                window.location.reload();
-            });
-        }
+        })
+        .catch((err) => {
+            this.error(err);
+        });
     };
 
     render() {

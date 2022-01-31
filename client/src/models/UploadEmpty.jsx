@@ -3,13 +3,13 @@ import ReactDOM from "react-dom";
 import { Form } from "semantic-ui-react";
 
 import PopUp from "./PopUp";
+import Token from "../auth/Token";
 
 import "./UploadEmpty.css";
 
 class UploadEmpty extends PopUp {
     constructor(props) {
         super(props);
-        console.log(props.box);
         this.state = {
             name: props.box.name,
             description: props.box.description,
@@ -25,19 +25,18 @@ class UploadEmpty extends PopUp {
 
     handleSubmit = () => {
         const data = new FormData();
-        data.append("name", this.state.name);
-        data.append("description", this.state.description);
-        data.append("file", this.state.selectedFile);
-        data.append("username", this.state.username);
-        data.append("public", this.state.public ? 1 : 0);
+
         data.append("_id", this.state._id);
-        fetch("/api/uploadfromempty", {
+        if (Token.exists()) data.append("token", Token.get());
+        data.append("file", this.state.selectedFile);
+        fetch("/api/upload", {
             method: "POST",
             body: data,
         }).then((res) => {
-            //TODO(Callum) : Show confirmation message
-            this.close();
-            window.location.reload(false);
+            this.finished();
+        })
+        .catch((err) => {
+            this.error(err);
         });
     };
 

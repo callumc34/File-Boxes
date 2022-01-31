@@ -2,6 +2,7 @@ const express = require("express");
 const fileUpload = require("express-fileupload");
 const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
+const { queryParser } = require("express-query-parser");
 const cors = require("cors");
 const crypto = require("crypto");
 const fs = require("fs");
@@ -54,6 +55,14 @@ const FileBoxesApi = class FileBoxesApi {
         this.app.use(cors(corsOptions));
         this.app.use(bodyParser.json());
         this.app.use(bodyParser.urlencoded({ extended: false }));
+        this.app.use(
+            queryParser({
+                parseNull: true,
+                parseUndefined: true,
+                parseBoolean: true,
+                parseNumber: true
+            })
+        );
         this.app.use(cookieParser());
         this.app.use(fileUpload());
 
@@ -64,29 +73,210 @@ const FileBoxesApi = class FileBoxesApi {
     }
 
     /**
-     * Edits a box based on its file hash
-     *
-     * @param      {Request}  req     The request
-     * @param      {Response}}  res     The response
+     * Validate an attempted box query
+     * 
+     * @param      {string}  name     The name
+     * @param      {description}  description     The description
+     * @param      {Boolean}  public     The public state of the box
+     * @param      {string}  username     The username
+     * @param      {string}  token     The token
+     * @returns    {Boolean} true if valid, false otherwise
      */
-    edit(req, res) {
-        this.dbAccess.editBox(req.query).then((result) => {
-            if (!result.acknowledged) return res.sendStatus(550);
-            return res.sendStatus(200);
-        });
+    static _requestValidate(
+        name,
+        description,
+        isPublic,
+        username,
+        token
+    ) {
+        //Validation checks
+        if (!name || !description) return false;
+        if (!username && isPublic != true) return false;
+        if (username && !token) return false;
+        return true;
+    }
+
+    /**
+     * Check whether mongo db successfuly performed an operation and return a response to the user
+     *
+     * @param      {Result}  result    The result
+     * @param      {Response}  response  The response
+     */
+    static _acknowledgeDatabase(result, response) {
+        if (result.acknowledged) return response.sendStatus(200);
+        return response.sendStatus(590);
+    }
+
+    /**
+     * Validate a box ID and username
+     *
+     * @param      {string}    boxId  The box id
+     * @param      {string}    token     The token
+     * @param      {Function}  callback  The callback
+     * @return     {Boolean}    true if valid false otherwise
+     */
+    async _validateToken(boxId, token) {
+        if (!boxId) return { valid: false };
+
+        let boxInfo = await this.dbAccess.getBoxFromId(boxId);
+        let username = boxInfo.username;
+        
+        if (!username) return { valid: true, username }; //Publicly owned box anyone can modify it
+        if (!token) return { valid: false };
+
+        let result = await this.dbAccess.validateToken(username, token);
+        return { valid: result.valid, username };
     }
 
     /**
      * Api gateway to add box to database
+     * keys:
+     *     name,
+     *     description,
+     *     fileHash,
+     *     public,
+     *     username,
+     *     token
      *
      * @param      {Request}  req     The request
      * @param      {Response}  res     The response
      */
     add(req, res) {
-        var box = Box.fromObj(req.query);
-        if (box != null) {
-            this.dbAccess.addBox(box).then(() => res.sendStatus(200));
-        } else res.sendStatus(550);
+        var {
+            name,
+            description,
+            token
+        } = req.query;
+        var isPublic = req.query.public; //Special case
+
+        this.dbAccess.getInfoFromToken(token).then((result) => {
+            if (!FileBoxesApi._requestValidate(
+                name,
+                description,
+                isPublic,
+                result.username,
+                token
+            )) return res.sendStatus(400);
+
+            this._addInternal(
+                undefined,
+                name,
+                description,
+                null,
+                isPublic,
+                result.username,
+                res
+            );
+        });
+    }
+
+    /**
+     * Adds a box to the database - unexposed
+     * 
+     * @param      {string}  name     The name
+     * @param      {description}  name     The description
+     * @param      {string}  fileHash     The file hash
+     * @param      {Boolean}  public     The public state of the box
+     * @param      {string}  username     The username
+     * @param      {ObjectId}  id     The box id
+     * @param      {Response}  res     The response
+     */
+    _addInternal(
+        id,
+        name,
+        description,
+        fileHash,
+        isPublic,
+        username,
+        res
+    ) {
+        let box = new Box(
+            name,
+            description,
+            fileHash,
+            isPublic,
+            username,
+            id
+        );
+        this.dbAccess.addBox(box).then((result) => {
+            if (result.acknowledged) {
+                return res.json({ _id: result.insertedId });
+            } else return res.sendStatus(590);
+        });
+    }
+
+    /**
+     * Edits a box based on its file hash
+     *
+     * keys:
+     *     _id,
+     *     name, - optional
+     *     description, - optional
+     *     fileHash, - optional
+     *     public, - optional
+     *     username - optional
+     *     token - optional
+     *
+     * @param      {Request}  req     The request
+     * @param      {Response}}  res     The response
+     */
+    edit(req, res) {
+        var {
+            _id,
+            name,
+            description,
+            fileHash,
+            token
+        } = req.query;
+        var isPublic = req.query.public;
+
+        this._validateToken(_id, token).then((result) => {
+            if (!FileBoxesApi._requestValidate(
+                name,
+                description,
+                isPublic,
+                result.username,
+                token
+            )) return res.sendStatus(400);
+            
+            if (result.valid) {
+                let box = new Box(
+                    name,
+                    description,
+                    fileHash,
+                    isPublic,
+                    result.username,
+                    _id
+                );
+                this.dbAccess.editBox(box).then((done) => FileBoxesApi._acknowledgeDatabase(done, res));
+            } else return res.sendStatus(401);
+        });
+    }
+
+    /**
+     * Get the contents of a file
+     *
+     * @param      {Request}  req     The request
+     * @param      {Response}  res     The resource
+     */
+    fileContents(req, res) {
+        var {
+            _id,
+            token
+        } = req.query;
+
+        this._validateToken(_id, token).then((result) => {
+            if (result.valid) {
+                this.dbAccess.getBoxFromId(_id).then((box) => {                    
+                    const filePath = `${__dirname}/storage/${box.fileHash}`;
+                    if (fs.existsSync(filePath)) {
+                        fs.readFile(filePath, "utf-8", (err, data) => {
+                            return res.json(data);
+                        });
+                    } else return res.sendStatus(404);
+                });
+            } else return res.sendStatus(401);
+        });  
     }
 
     /**
@@ -96,61 +286,14 @@ const FileBoxesApi = class FileBoxesApi {
      * @param      {Response}  res     The response
      */
     delete(req, res) {
-        const { token, _id } = req.query;
-        if (_id == undefined) return res.sendStatus(550);
+        var {
+            _id,
+            token
+        } = req.query;
 
-        //
-        if (token != undefined) {
-            this.dbAccess
-                .getInfoFromToken(token)
-                .then((result) => {
-                    if (result.error || result.expired)
-                        return res.sendStatus(491);
-                    return result.username;
-                })
-                .then((username) => {
-                    this.dbAccess.getBoxFromId(_id).then((box) => {
-                        if (box.username == username) {
-                            const filePath = `${__dirname}/storage/${_id}`;
-                            if (fs.existsSync(filePath)) {
-                                fs.unlink(filePath, (err) => {});
-                            }
-
-                            this.dbAccess.removeBox(_id).then((result) => {
-                                res.sendStatus(200);
-                            });
-                        } else {
-                            res.send(401);
-                        }
-                    });
-                });
-        } else {
-            this.dbAccess.getBoxFromId(_id).then((box) => {
-                if (box.username == null) {
-                    const filePath = `${__dirname}/storage/${_id}`;
-                    if (fs.existsSync(filePath)) {
-                        fs.unlink(filePath, (err) => {});
-                    }
-
-                    this.dbAccess.removeBox(_id).then((result) => {
-                        res.sendStatus(200);
-                    });
-                } else {
-                    res.sendStatus(401);
-                }
-            });
-        }
-    }
-
-    /**
-     * Get all boxes
-     *
-     * @param      {Request}  req     The request
-     * @param      {Response}  res     The response
-     */
-    all(req, res) {
-        this.dbAccess.findBoxes({}).then((result) => {
-            res.json({ boxes: result });
+        this._validateToken(_id, token).then((result) => {
+            if (result.valid) this.dbAccess.removeBox(_id).then((done) => FileBoxesApi._acknowledgeDatabase(done, res));
+            else return res.sendStatus(401);
         });
     }
 
@@ -160,7 +303,7 @@ const FileBoxesApi = class FileBoxesApi {
      * @param      {<type>}  req     The request
      * @param      {<type>}  res     The resource
      */
-    publicBoxes(req, res) {
+    publicBoxes(req, res) {        
         this.dbAccess.findBoxes({ public: true }).then((result) => {
             res.json({ boxes: result });
         });
@@ -173,14 +316,14 @@ const FileBoxesApi = class FileBoxesApi {
      * @param      {Response}  res     The response
      */
     userBoxes(req, res) {
-        const token = req.query.token;
-        if (token == null) return res.sendStatus(401);
+        var {
+            token
+        } = req.query;
+        
         this.dbAccess.getInfoFromToken(token).then((result) => {
-            this.dbAccess
-                .findBoxes({ username: result.username })
-                .then((result) => {
-                    res.json({ boxes: result });
-                });
+            this.dbAccess.findBoxes({ username: result.username }).then((done) => {
+                res.json({ boxes: done });
+            });
         });
     }
 
@@ -191,24 +334,17 @@ const FileBoxesApi = class FileBoxesApi {
      * @param      {Response}  res     The response
      */
     download(req, res) {
-        const _id = req.query._id;
-        if (_id == undefined || _id == "null") return res.sendStatus(550);
+        var {
+            _id,
+            token
+        } = req.query;
 
-        this.dbAccess.getBoxFromId(_id).then((result) => {
-            const filePath = `${__dirname}/storage/${_id}`;
-            res.download(filePath, `${result.name}.csv`);
-        });
-    }
-
-    /**
-     * Api gateway to upload an empty box to database
-     *
-     * @param      {Request}  req     The request
-     * @param      {Response}  res     The response
-     */
-    emptyBox(req, res) {
-        this.dbAccess.addBox(Box.fromObj(req.query)).then(() => {
-            res.sendStatus(200);
+        return this._validateToken(_id, token).then((valid) => {
+            if (!valid) return res.sendStatus(401);
+            this.dbAccess.getBoxFromId(_id).then((box) => {
+                const filePath = `${__dirname}/storage/${box.fileHash}`;
+                res.download(filePath, `${box.name}.csv`);
+            });
         });
     }
 
@@ -218,33 +354,11 @@ const FileBoxesApi = class FileBoxesApi {
      * @param      {Request}  req     The request
      * @param      {Response}  res     The response
      */
-    usernameFromToken(req, res) {
+    usernameFromToken(req, res) {        
         if (req.query.token == null) return res.sendStatus(400);
         this.dbAccess.getInfoFromToken(req.query.token).then((result) => {
             if (result.error) return res.sendStatus(491);
             return res.json(result);
-        });
-    }
-
-    /**
-     * Get the contents of a csv file
-     *
-     * @param      {Request}  req     The request
-     * @param      {Response}  res     The resource
-     */
-    fileContents(req, res) {
-        const { _id } = req.query;
-        if (_id == null || _id == "undefined" || _id == "null")
-            return res.sendStatus(400);
-        this.dbAccess.getBoxFromId(_id).then((result) => {
-            if (!result) return res.sendStatus(404);
-
-            const filePath = `${__dirname}/storage/${_id}`;
-            if (fs.existsSync(filePath)) {
-                fs.readFile(filePath, "utf-8", (err, data) => {
-                    return res.json(data);
-                });
-            } else return res.sendStatus(404);
         });
     }
 
@@ -255,35 +369,26 @@ const FileBoxesApi = class FileBoxesApi {
      * @param      {Response}  res     The response
      */
     saveFile(req, res) {
-        let uploadFile = req.files.file;
+        var {
+            _id,
+            token
+        } = req.body;
 
-        const hash = calcHash(uploadFile.data);
-        var boxInfo = req.body;
-        boxInfo.fileHash = hash;
+        var uploadFile = req.files.file;
 
-        //TODO(Callum) : Checks for duplicates
-        fs.mkdir(`${__dirname}/storage`, () => {});
-
-        this.dbAccess.addBox(Box.fromObj(boxInfo)).then((result) => {
-            if (!result.acknowledged) return res.sendStatus(550);
-            uploadFile.mv(
-                `${__dirname}/storage/${result.insertedId}`,
-                (err) => {
-                    if (err) return res.sendStatus(500);
-                    else return res.sendStatus(200);
-                }
-            );
+        this._validateToken(_id, token).then((result) => {
+            const hash = calcHash(uploadFile.data);
+            this.dbAccess.updateBoxHash(_id, hash).then((done) => {
+                if (!done.acknowledged) return res.sendStatus(590);
+                uploadFile.mv(
+                    `${__dirname}/storage/${hash}`,
+                    (err) => {
+                        if (err) return res.sendStatus(500);
+                        else return res.sendStatus(200);
+                    }
+                );
+            });
         });
-    }
-
-    /**
-     * Uploads an empty box
-     *
-     * @param      {Request}  req     The request
-     * @param      {Response}  res     The response
-     */
-    uploadFromEmpty(req, res) {
-        this.saveFile(req, res);
     }
 
     //Login/Signup
@@ -330,22 +435,6 @@ const FileBoxesApi = class FileBoxesApi {
     }
 
     /**
-     * Validate a token
-     *
-     * @param      {Request}  req     The request
-     * @param      {Response}  res     The resource
-     */
-    validateToken(req, res) {
-        const { username, token } = req.body;
-        if (username == null || token == null) return res.sendStatus(400);
-
-        this.dbAccess.validateToken(username, token).then((result) => {
-            if (result.valid) return res.sendStatus(200);
-            else return res.sendStatus(491);
-        });
-    }
-
-    /**
      * Setup express routes
      */
     setupRoutes() {
@@ -356,39 +445,31 @@ const FileBoxesApi = class FileBoxesApi {
         });
         this.app.get("/api/add", (req, res) => this.add(req, res));
         this.app.get("/api/edit", (req, res) => this.edit(req, res));
+        this.app.get("/api/file", (req, res) => this.fileContents(req, res));
         this.app.get("/api/delete", (req, res) => this.delete(req, res));
-        this.app.get("/api/deletename", (req, res) =>
-            this.deleteName(req, res)
-        );
-        this.app.get("/api/all", (req, res) => this.all(req, res));
         this.app.get("/api/public", (req, res) => this.publicBoxes(req, res));
         this.app.get("/api/boxes", (req, res) => this.userBoxes(req, res));
         this.app.get("/api/download", (req, res) => this.download(req, res));
-        this.app.get("/api/emptybox", (req, res) => this.emptyBox(req, res));
         this.app.get("/api/user", (req, res) =>
             this.usernameFromToken(req, res)
         );
-        this.app.get("/api/file", (req, res) => this.fileContents(req, res));
         //Post api
         this.app.post("/api/upload", (req, res) => this.saveFile(req, res));
-        this.app.post("/api/uploadfromempty", (req, res) =>
-            this.uploadFromEmpty(req, res)
-        );
 
         //Login/Signup
         this.app.post("/api/signup", (req, res) => this.signUp(req, res));
         this.app.post("/api/login", (req, res) => this.login(req, res));
-        this.app.get("/api/validate", (req, res) =>
-            this.validateToken(req, res)
-        );
     }
 
     /**
      * Start the express listener
      */
     start() {
-        this.app.listen(this.PORT, () => {
-            console.log(`Server listening on ${this.PORT}`);
+        this.dbAccess.once("open", () => {
+            console.log("MongoDB connected.");
+            this.app.listen(this.PORT, () => {
+                console.log(`Server listening on ${this.PORT}.`);
+            });
         });
     }
 };

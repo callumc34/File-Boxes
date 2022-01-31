@@ -11,7 +11,7 @@ function UsersBoxes() {
     const [data, setData] = React.useState(null);
 
     React.useEffect(() => {
-        fetch(`/api/boxes?token=${Token.get()}`)
+        fetch(`/api/boxes?${Token.toURLString()}`)
             .then((res) => res.json())
             .then((data) => setData(data));
     }, []);
