@@ -1,16 +1,9 @@
 import React, { useState } from "react";
 
-import {
-    Divider,
-    Menu,
-    Header,
-    Icon,
-    List,
-    Sidebar,
-} from "semantic-ui-react";
+import { Divider, Menu, Header, Icon, List, Sidebar } from "semantic-ui-react";
 import { Link } from "react-router-dom";
 
-import Token from "../auth/Token"
+import Token from "../auth/Token";
 
 import "./Page.css";
 
@@ -18,13 +11,13 @@ function Page(Main) {
     function createMenuLink(link, icon, text) {
         return (
             <>
-            <Link to={link}>
-                <Menu.Item>
-                    <Icon name={icon} inverted />
-                    {text}
-                </Menu.Item>
-            </Link>
-            <Divider />
+                <Link to={link}>
+                    <Menu.Item>
+                        <Icon name={icon} inverted />
+                        {text}
+                    </Menu.Item>
+                </Link>
+                <Divider />
             </>
         );
     }
@@ -37,7 +30,9 @@ function Page(Main) {
     }, []);
 
     const LoginName = (
-        <Header as="h3" inverted>Logged in as: {user.username}</Header>
+        <Header as="h3" inverted>
+            Logged in as: {user.username}
+        </Header>
     );
 
     return (
@@ -64,16 +59,19 @@ function Page(Main) {
                             </List.Item>
                             <List.Content>
                                 <List.Item>
-                                    <Header as="h1" inverted>File Boxes</Header>
+                                    <Header as="h1" inverted>
+                                        File Boxes
+                                    </Header>
                                 </List.Item>
                             </List.Content>
                         </List>
                     </Menu.Item>
                     {createMenuLink("/", "home", "Home")}
                     {createMenuLink("/boxes", "box", "My boxes")}
+                    {createMenuLink("/inbox", "inbox", "Inbox")}
                     {createMenuLink("/login", "sign in", "Login")}
                     {createMenuLink("/logout", "sign out", "Logout")}
-                    {(Token.exists() && !user.expired) ? LoginName : null}
+                    {Token.exists() && !user.expired ? LoginName : null}
                     <Divider />
                 </Sidebar>
                 <Sidebar.Pusher>

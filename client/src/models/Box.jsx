@@ -6,7 +6,8 @@ import { Grid, Card, Segment, Icon, Button } from "semantic-ui-react";
 import BoxCreate from "./BoxCreate";
 import EditBox from "./EditBox";
 import UploadEmpty from "./UploadEmpty";
-import PreviewBox from "./PreviewBox"
+import PreviewBox from "./PreviewBox";
+import ShareBox from "./ShareBox";
 
 import Token from "../auth/Token";
 
@@ -46,15 +47,13 @@ class Box extends React.Component {
         this.fileHash = props.fileHash;
         this.public = props.public;
         this.username = props.username;
-        this._id = props._id; 
+        this._id = props._id;
     }
 
     static renderList(boxes) {
         var boxBoxes = [];
         for (let box of boxes) {
-            boxBoxes.push(
-                new Box(box)
-            );
+            boxBoxes.push(new Box(box));
         }
 
         do {
@@ -95,20 +94,31 @@ class Box extends React.Component {
     };
 
     delete = () => {
-        Axios.get(`/api/delete?_id=${this._id}\
-${Token.toURLString()}`).then((result) => {
-                window.location.reload();
-            });
-    }
+        Axios.get(
+            `/api/delete?_id=${this._id}\
+${Token.toURLString()}`
+        ).then((result) => {
+            window.location.reload();
+        });
+    };
+
+    share = () => {
+        ReactDOM.render(
+            <React.StrictMode>
+                <ShareBox box={this} />
+            </React.StrictMode>,
+            document.getElementById("popup")
+        );
+    };
 
     preview = (data) => {
         ReactDOM.render(
             <React.StrictMode>
-                <PreviewBox box={this} data={data}/>
+                <PreviewBox box={this} data={data} />
             </React.StrictMode>,
             document.getElementById("popup")
-        );        
-    }
+        );
+    };
 
     /**
      * @brief      Downloads a file.
@@ -118,22 +128,23 @@ ${Token.toURLString()}`).then((result) => {
     downloadFile(unbox) {
         Axios.get(`api/download?_id=${this._id}${Token.toURLString()}`, {
             responseType: "blob",
-        }).then((response) => {
-            const fileURL = window.URL.createObjectURL(
-                new Blob([response.data])
-            );
-            const fileLink = document.createElement("a");
-            fileLink.href = fileURL;
-            const fileName = this.name + ".csv";
-            fileLink.setAttribute("download", fileName);
-            document.body.appendChild(fileLink);
-            fileLink.click();
-            fileLink.remove();
-            if (unbox)
-                this.delete();
-        }).then(() => {
-            window.location.reload();
-        });
+        })
+            .then((response) => {
+                const fileURL = window.URL.createObjectURL(
+                    new Blob([response.data])
+                );
+                const fileLink = document.createElement("a");
+                fileLink.href = fileURL;
+                const fileName = this.name + ".csv";
+                fileLink.setAttribute("download", fileName);
+                document.body.appendChild(fileLink);
+                fileLink.click();
+                fileLink.remove();
+                if (unbox) this.delete();
+            })
+            .then(() => {
+                window.location.reload();
+            });
     }
 
     editCard = () => {
@@ -168,7 +179,7 @@ ${Token.toURLString()}`).then((result) => {
                         <Icon name="pencil alternate" />
                         Edit
                     </Button>
-                    <Button fluid className="NoMargin">
+                    <Button fluid className="NoMargin" onClick={this.share}>
                         <Icon name="share" />
                         Share
                     </Button>

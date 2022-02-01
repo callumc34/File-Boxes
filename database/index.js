@@ -58,11 +58,12 @@ const DatabaseAccess = class DatabaseAccess extends MongoClient {
     async getInfoFromToken(token) {
         let tokens = await this.getTokenCollection();
         let user = await tokens.findOne({ token });
-        
-        if (!user) return {
-            username: null,
-            expired: false
-        };
+
+        if (!user)
+            return {
+                username: null,
+                expired: false,
+            };
 
         return {
             username: user.username,
@@ -117,10 +118,10 @@ const DatabaseAccess = class DatabaseAccess extends MongoClient {
         let tokens = await this.getTokenCollection();
         let found = await this._hasToken(username);
         if (!found.token) return { valid: false };
-        else return {
-            valid: ((token === found.token) && !found.expired) ?
-                true : false
-        };
+        else
+            return {
+                valid: token === found.token && !found.expired ? true : false,
+            };
     }
 
     /**
@@ -221,9 +222,24 @@ const DatabaseAccess = class DatabaseAccess extends MongoClient {
                     description: box.description,
                     fileHash: box.fileHash,
                     username: box.username,
-                    public: box.public
+                    public: box.public,
                 },
             }
+        );
+    }
+
+    /**
+     * Adds a user to a box.
+     *
+     * @param      {string}   id        The identifier
+     * @param      {string}   username  The username
+     * @return     {Promise}  { MongoDB Result }
+     */
+    async addSharedBoxUser(id, username) {
+        let boxes = await this.getBoxCollection();
+        return await boxes.updateOne(
+            { _id: new ObjectId(id) },
+            { $push: { shared: username } }
         );
     }
 
@@ -231,7 +247,7 @@ const DatabaseAccess = class DatabaseAccess extends MongoClient {
         let boxes = await this.getBoxCollection();
         return await boxes.updateMany(
             { _id: new ObjectId(id) },
-            { $set: { fileHash }}
+            { $set: { fileHash } }
         );
     }
 
@@ -254,6 +270,21 @@ const DatabaseAccess = class DatabaseAccess extends MongoClient {
     async getBoxFromId(_id) {
         let boxes = await this.getBoxCollection();
         return await boxes.findOne({ _id: new ObjectId(_id) });
+    }
+
+    /**
+     * Finds a shared box.
+     *
+     * @param      {string}   username  The username
+     * @param      {string}   id        The identifier
+     * @return     {Promise}  { Found box }
+     */
+    async findSharedBox(username, id) {
+        let boxes = await this.getBoxCollection();
+        return await boxes.findOne(
+            { shared: { $in: [username] } },
+            { _id: new ObjectId(id) }
+        );
     }
 
     /**

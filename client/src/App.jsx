@@ -5,6 +5,7 @@ import Login from "./pages/Login";
 import Logout from "./pages/Logout";
 import SignUp from "./pages/SignUp";
 import UsersBoxes from "./pages/UsersBoxes";
+import Inbox from "./pages/Inbox";
 
 function App() {
     return (
@@ -15,6 +16,7 @@ function App() {
                 <Route path="/logout" element={<Logout />} />
                 <Route path="/signup" element={<SignUp />} />
                 <Route path="/boxes" element={<UsersBoxes />} />
+                <Route path="/inbox" element={<Inbox />} />
             </Routes>
         </Router>
     );
