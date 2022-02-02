@@ -50,6 +50,79 @@ const DatabaseAccess = class DatabaseAccess extends MongoClient {
     }
 
     /**
+     * Gets the admin collection.
+     *
+     * @return     {Promise}  The admin collection.
+     */
+    async getAdminCollection() {
+        return await this.db(DB_NAME).collection("admin");
+    }
+
+    /**
+     * Attempt to login to admin
+     *
+     * @param      {string}   username  The username
+     * @param      {username}   password  The password
+     * @return     {Promise}  { error, success }
+     */
+    async adminLogin(username, password) {
+        let adminCollection = await this.getAdminCollection();
+        let admin = await adminCollection.findOne({ username });
+
+        if (!admin) return { error: "No user found with that username." };
+
+        let hash = await crypto
+            .createHmac("sha512", password + admin.salt)
+            .digest("hex");
+
+        if (hash === admin.password)
+            return { result: true, error: false, token: admin.token };
+        else return { result: false, error: "Invalid password." };
+    }
+
+    /**
+     * Creates an admin.
+     *
+     * @param      {string}   username  The username
+     * @param      {string}   password  The password
+     * @return     {Promise}  { error, success }
+     */
+    async createAdmin(username, password) {
+        if (!username || !password) return { error: "Invalid user call" };
+
+        let adminCollection = await this.getAdminCollection();
+        let users = await adminCollection.find({ username }).toArray();
+        if (users.length > 0) return { error: "Username already exists" };
+
+        let salt = await crypto.randomBytes(32).toString("hex");
+        let hash = await crypto
+            .createHmac("sha512", password + salt)
+            .digest("hex");
+
+        let result = await adminCollection.insertOne({
+            username,
+            salt,
+            password: hash,
+        });
+        if (result.insertedId) {
+            return { result: true, error: false };
+        }
+    }
+
+    /**
+     * Authenticate an admin token
+     *
+     * @param      {string}   token   The token
+     * @return     {Promise}  { valid }
+     */
+    async authenticateAdmin(token) {
+        let adminCollection = await this.getAdminCollection();
+        let result = await adminCollection.find({ token });
+
+        return { valid: Boolean(result) };
+    }
+
+    /**
      * Gets the information from token.
      *
      * @param      {string}   token   The token
@@ -148,8 +221,7 @@ const DatabaseAccess = class DatabaseAccess extends MongoClient {
      */
     async signUp(user) {
         const { username, password } = user;
-        if (username == null || password == null)
-            return { error: "Invalid user call" };
+        if (!username || !password) return { error: "Invalid user call" };
 
         let userCollection = await this.getUserCollection();
         let users = await userCollection.find({ username }).toArray();
@@ -179,10 +251,12 @@ const DatabaseAccess = class DatabaseAccess extends MongoClient {
      * @return     {Promise}  { result, error }
      */
     async signIn(username, password) {
+        if (!username || !password) return { error: "Invalid user call" };
+
         let userCollection = await this.getUserCollection();
         let user = await userCollection.findOne({ username });
 
-        if (user == null) return { error: "No user found with that username." };
+        if (!user) return { error: "No user found with that username." };
 
         let hash = await crypto
             .createHmac("sha512", password + user.salt)
@@ -190,6 +264,52 @@ const DatabaseAccess = class DatabaseAccess extends MongoClient {
 
         if (hash === user.password) return { result: true, error: false };
         else return { result: false, error: "Invalid password." };
+    }
+
+    /**
+     * Gets all users from the database
+     *
+     * @return     {Promise}  { List of users }
+     */
+    async allUsers() {
+        let coll = await this.getUserCollection();
+
+        return await coll
+            .find({})
+            .project({
+                _id: 0,
+                password: 0,
+                salt: 0,
+            })
+            .toArray();
+    }
+
+    /**
+     * Deletes a user from the database
+     *
+     * @param      {string}   username  The username
+     * @return     {Promise}  { MongoDB Result }
+     */
+    async deleteUser(username) {
+        let coll = await this.getUserCollection();
+
+        let result = await coll.deleteOne({ username });
+
+        let tokens = await this.getTokenCollection();
+        await tokens.deleteOne({ username });
+        return result;
+    }
+
+    /**
+     * Deletes a users boxes from the database
+     *
+     * @param      {string}   username  The username
+     * @return     {Promise}  { MongoDB Result }
+     */
+    async deleteUsersBoxes(username) {
+        let coll = await this.getBoxCollection();
+
+        return await coll.deleteMany({ username });
     }
 
     /**
@@ -243,6 +363,13 @@ const DatabaseAccess = class DatabaseAccess extends MongoClient {
         );
     }
 
+    /**
+     * Updates a box based on its hash
+     *
+     * @param      {string}   id        The identifier
+     * @param      {string}   fileHash  The file hash
+     * @return     {Promise}  { MongoDB Result }
+     */
     async updateBoxHash(id, fileHash) {
         let boxes = await this.getBoxCollection();
         return await boxes.updateMany(

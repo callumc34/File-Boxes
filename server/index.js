@@ -365,7 +365,9 @@ const FileBoxesApi = class FileBoxesApi {
         this.dbAccess.getInfoFromToken(token).then((result) => {
             if (!result.expired) {
                 this.dbAccess
-                    .findBoxes({ shared: { $in: [result.username] } })
+                    .findBoxes({
+                        shared: { $in: [result.username], $exists: true },
+                    })
                     .then((done) => {
                         res.json({ boxes: done });
                     });
@@ -455,19 +457,100 @@ const FileBoxesApi = class FileBoxesApi {
      */
     login(req, res) {
         const { username, password } = req.body;
-        if (username == null || password == null) return res.status(400);
+        if (!username || !password) return res.status(400);
 
         this.dbAccess.signIn(username, password).then((result) => {
-            if (result.error)
-                return res
-                    .status(490)
-                    .type("json")
-                    .send(JSON.stringify(result));
+            if (result.error) return res.sendStatus(490);
 
             //Login success - return token
             this.dbAccess.createTokenDefault(username).then((result) => {
                 if (!result.token) return res.status(491);
                 return res.json(result);
+            });
+        });
+    }
+
+    /**
+     * Admin login
+     *
+     * @param      {Request}  req     The request
+     * @param      {Response}  res     The response
+     */
+    adminLogin(req, res) {
+        const { username, password } = req.body;
+
+        this.dbAccess.adminLogin(username, password).then((result) => {
+            if (!result.token) return res.sendStatus(490);
+            return res.json(result);
+        });
+    }
+
+    /**
+     * Authenticate an admin token
+     *
+     * @param      {Request}  req     The request
+     * @param      {Response}  res     The resource
+     */
+    authenticateAdmin(req, res) {
+        const { token } = req.body;
+
+        this.dbAccess.authenticateAdmin(token).then((result) => {
+            return res.json(result);
+        });
+    }
+
+    /**
+     * Gets all users
+     *
+     * @param      {Request}  req     The request
+     * @param      {Response}  res     The response
+     */
+    users(req, res) {
+        const { token } = req.body;
+
+        this.dbAccess.authenticateAdmin(token).then((result) => {
+            if (!result.valid) return res.sendStatus(401);
+            this.dbAccess.allUsers().then((users) => {
+                res.json({ users });
+            });
+        });
+    }
+
+    /**
+     * Deletes a user from the database
+     *
+     * @param      {Request}  req     The request
+     * @param      {Response}  res     The response
+     */
+    deleteUser(req, res) {
+        const { token, username } = req.body;
+
+        if (!token || !username) return res.sendStatus(401);
+
+        this.dbAccess.authenticateAdmin(token).then((resutl) => {
+            this.dbAccess.deleteUser(username).then((done) => {
+                if (!done.acknowledged) return res.sendStatus(590);
+                this.dbAccess.deleteUsersBoxes(username).then((finished) => {
+                    FileBoxesApi._acknowledgeDatabase(finished, res);
+                });
+            });
+        });
+    }
+
+    /**
+     * Deletes a users boxes from the database
+     *
+     * @param      {Request}  req     The request
+     * @param      {Response}  res     The response
+     */
+    deleteUserBoxes(req, res) {
+        const { token, username } = req.body;
+
+        if (!token || !username) return res.sendStatus(401);
+
+        this.dbAccess.authenticateAdmin(token).then((resutl) => {
+            this.dbAccess.deleteUsersBoxes(username).then((done) => {
+                FileBoxesApi._acknowledgeDatabase(done, res);
             });
         });
     }
@@ -499,6 +582,22 @@ const FileBoxesApi = class FileBoxesApi {
         //Login/Signup
         this.app.post("/api/signup", (req, res) => this.signUp(req, res));
         this.app.post("/api/login", (req, res) => this.login(req, res));
+        this.app.post("/api/admin", (req, res) => {
+            res.json({ message: "Admin access required " });
+        });
+        this.app.post("/api/admin/login", (req, res) =>
+            this.adminLogin(req, res)
+        );
+        this.app.post("/api/admin/auth", (req, res) =>
+            this.authenticateAdmin(req, res)
+        );
+        this.app.post("/api/admin/users", (req, res) => this.users(req, res));
+        this.app.post("/api/admin/deleteuser", (req, res) =>
+            this.deleteUser(req, res)
+        );
+        this.app.post("/api/admin/deleteuserboxes", (req, res) =>
+            this.deleteUserBoxes(req, res)
+        );
     }
 
     /**

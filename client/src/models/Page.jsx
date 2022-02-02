@@ -71,6 +71,7 @@ function Page(Main) {
                     {createMenuLink("/inbox", "inbox", "Inbox")}
                     {createMenuLink("/login", "sign in", "Login")}
                     {createMenuLink("/logout", "sign out", "Logout")}
+                    {createMenuLink("/admin/login", "user", "Admin")}
                     {Token.exists() && !user.expired ? LoginName : null}
                     <Divider />
                 </Sidebar>

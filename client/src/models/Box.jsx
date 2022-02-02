@@ -64,7 +64,7 @@ class Box extends React.Component {
         while (boxBoxes.length > 0) {
             var row = [];
             for (let i = 1; i <= 3; i++) {
-                if (boxBoxes[0] === undefined) break;
+                if (!boxBoxes[0]) break;
                 else row.push(boxBoxes.pop());
             }
             boxRows.push(row.reverse());
@@ -140,10 +140,10 @@ ${Token.toURLString()}`
                 document.body.appendChild(fileLink);
                 fileLink.click();
                 fileLink.remove();
-                if (unbox) this.delete();
             })
             .then(() => {
-                window.location.reload();
+                if (unbox) this.delete();
+                else window.location.reload();
             });
     }
 
