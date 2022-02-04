@@ -423,6 +423,9 @@ const FileBoxesApi = class FileBoxesApi {
             const hash = calcHash(uploadFile.data);
             this.dbAccess.updateBoxHash(_id, hash).then((done) => {
                 if (!done.acknowledged) return res.sendStatus(590);
+
+                fs.mkdir(`${__dirname}/storage`, () => {});
+
                 uploadFile.mv(`${__dirname}/storage/${hash}`, (err) => {
                     if (err) return res.sendStatus(500);
                     else return res.sendStatus(200);
